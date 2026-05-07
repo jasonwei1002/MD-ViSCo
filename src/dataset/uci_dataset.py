@@ -44,7 +44,7 @@ class UCIConfig(DatasetBaseConfig):
 
     vitals_dataset: VitalsDatasetConfig | None = field(
         default_factory=lambda: VitalsDatasetConfig(
-            channels={"ECG": 0, "PPG": 0, "ABP": 0, "BP": 0}
+            channels={"ECG": 0, "PPG": 1, "ABP": 2, "BP": 3}
         )
     )
 

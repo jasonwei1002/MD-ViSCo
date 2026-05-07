@@ -21,15 +21,16 @@ _target_: src.dataset.pulsedb_dataset.PulseDBDataset
 dataset_name: PulseDB
 
 # Vitals available in this dataset (used by direction capability checks).
-# Channel index is required by VitalsDataset but unused for direction checks
-# (which only test key presence). Each waveform tensor is single-channel.
+# Channel index values are not consumed by any downstream logic (each waveform
+# tensor is stored single-channel and direction checks only test key presence),
+# but VitalsDataset enforces uniqueness, so assign distinct integers per vital.
 vitals_dataset:
   _target_: src.dataset.base_dataset.VitalsDataset
   channels:
     ECG: 0
-    PPG: 0
-    ABP: 0
-    BP: 0
+    PPG: 1
+    ABP: 2
+    BP: 3
 
 # Input size for models (controls automatic padding/trimming)
 input_size: 1280

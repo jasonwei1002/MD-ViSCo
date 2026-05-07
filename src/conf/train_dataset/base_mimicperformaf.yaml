@@ -29,7 +29,7 @@ vitals_dataset:
   _target_: src.dataset.base_dataset.VitalsDataset
   channels:
     ECG: 0
-    PPG: 0
+    PPG: 1
 
 # Input size for models (controls automatic padding/trimming)
 # Default to 1024 for compatibility with existing models
