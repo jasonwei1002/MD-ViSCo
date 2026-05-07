@@ -1637,13 +1637,14 @@ class BaseTrainer(ABC):
         )
         return sampler
 
-    @abstractmethod
     def on_checkpoint_loaded(self, checkpoint: dict[str, Any]) -> None:
         """Handle checkpoint loaded event.
 
-        Subclasses can override this to implement custom post-load logic
-        (e.g., logging, additional state restoration).
+        Optional hook. Default implementation does nothing. Subclasses can
+        override this to implement custom post-load logic (e.g., logging,
+        additional state restoration).
         """
+        del checkpoint
 
     def to_device(self, obj: Any) -> Any:
         """Move object to device robustly, handling nested structures."""
@@ -2847,7 +2848,6 @@ class BaseTrainer(ABC):
 
         return stage_metrics
 
-    @abstractmethod
     def _on_epoch_end(
         self,
         stage: str,
@@ -2856,14 +2856,15 @@ class BaseTrainer(ABC):
     ) -> None:
         """Handle end-of-epoch event for stage-specific behavior.
 
-        Subclasses can override this method to add stage-specific logging or
-        other behavior. Default implementation does nothing.
+        Optional hook. Default implementation does nothing. Subclasses can
+        override this method to add stage-specific logging or other behavior.
 
         Args:
             stage: Stage name ("train", "val", or "test")
             stage_metrics: Aggregated metrics for the stage
             master_process: Whether this is the master process
         """
+        del stage, stage_metrics, master_process
 
     @abstractmethod
     def _step_core(
