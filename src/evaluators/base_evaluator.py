@@ -265,12 +265,12 @@ class BaseEvaluator(ABC):
         which loads the suffix-free checkpoint filename (typically the
         best-performing checkpoint saved during training).
 
-        For code paths that go through ``src.test.main``,
-        ``validate_test_config`` requires ``checkpoint_epoch`` to be
-        explicitly provided in the configuration. For direct
-        instantiation of ``BaseEvaluator`` or its subclasses (bypassing
-        ``test.py``), omitting ``checkpoint_epoch`` or setting it to
-        ``None`` will result in best-checkpoint loading.
+        Both code paths through ``src.test.main`` and direct
+        instantiation of ``BaseEvaluator`` accept ``checkpoint_epoch``
+        as either an integer or ``None``. ``validate_test_config``
+        only rejects the OmegaConf ``MISSING`` sentinel; an explicit
+        ``None`` (or omitting the override entirely so the dataclass
+        default applies) selects best-checkpoint loading.
 
         To load a specific epoch checkpoint, provide an integer value:
         ``checkpoint_epoch=100``.

@@ -15,20 +15,20 @@ cd "$(dirname "$0")/../.."
 #     abp2ecg                            # ABP -> ECG
 #     ppg2ecg                            # PPG -> ECG
 #     ecg2ppg                            # ECG -> PPG
+#     ppg_ecg_multi_source               # multi-source single-direction: [PPG,ECG] -> ABP
 #
 #   Multi-direction (set DIRECTION_MODE=multi):
 #     ecg_ppg_abp                        # all 6 pairwise among ECG / PPG / ABP
 #     ecg_ppg_abp_clinically_meaningful  # PPG->ECG, PPG->ABP, ECG->ABP (default)
 #     ppg2abp_ecg2abp                    # PPG -> ABP and ECG -> ABP
 #     ppg2ecg_ecg2ppg                    # PPG <-> ECG
-#     ppg_ecg_multi_source               # multi-source -> single-target variants
 #
 #   Not supported on PulseDB:
 #     *imp* directions (IMP channel only exists in UCI)
 #     ppg2bp / ecg2bp / ppg2bp_ecg2bp    (BP scalar -> use stage-2 refinement)
 
 DIRECTION=ppg_ecg_multi_source
-DIRECTION_MODE=multi
+DIRECTION_MODE=single
 # Trainer yaml already pins the matching model in its defaults list, so we do
 # not pass a separate `model=` override here (Hydra rejects top-level model=).
 # Switch trainer to swap models, e.g. approximation_trainer_patchtst.
