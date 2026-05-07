@@ -42,24 +42,29 @@ trainer:
   log_file_path: "training.log"
   resume_training: false
   load_model_weights: false
-  direction_mode: ??? # single or multi
-  overwrite_checkpoint: ???
+  direction_mode: ??? # single or multi -- must be set via CLI (see scripts/pulsedb/*.sh)
   strict_loading: true
-  use_patient_information: ???  # Enable patient information (demographics) in models that support it (MDViSCo BPModel with TextEncoder)
-  
-  # Input preprocessing configuration for lazy normalization at batch time.
-  # See README.md → Advanced → Advanced Preprocessing for detailed documentation, examples, and available normalization types.
+
+  # Input preprocessing for lazy normalization at batch time.
+  # train.py auto-fills from train_dataset.input_preprocessing when this stays MISSING.
+  # See README.md -> Advanced -> Advanced Preprocessing for detailed documentation.
   input_preprocessing: ???
-  
-  checkpoint_managers:
-    save:
-      base_dir: ???
-  
+
+  # CSV file logging is disabled by default; trainers/evaluators write metrics
+  # via the progress bar + SwanLab path. Re-enable per run with
+  # trainer.progress_bar.csv_wrapper=csv if you want CSV side outputs.
   progress_bar:
-    wandb_wrapper:  
-      entity: ???
-      project_name: ???
     csv_wrapper: null
+
+  # Other knobs (overwrite_checkpoint, use_patient_information,
+  # checkpoint_managers.save.base_dir, progress_bar.wandb_wrapper.*) inherit
+  # their defaults from the trainer dataclass / yaml chain. Override on the
+  # CLI when needed, e.g.:
+  #   trainer.overwrite_checkpoint=true
+  #   trainer.checkpoint_managers.save.base_dir=/custom/checkpoints
+  #   trainer.progress_bar.wandb_wrapper.project_name=MD-ViSCo
+  #   trainer.progress_bar.wandb_wrapper.entity=my_team
+  #   trainer.progress_bar.wandb_wrapper.wandb_enabled=false  # disable SwanLab logging
 
 # Usage Examples
 # ============================================================================

@@ -24,7 +24,6 @@ from typing import Any
 
 # Third-party imports
 from hydra.core.config_store import ConfigStore
-from omegaconf import MISSING
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +43,10 @@ class WandBWrapperConfig:
     """
 
     _target_: str = "src.loggings.wandb_wrapper.WandBWrapper"
-    project_name: str = MISSING
+    project_name: str | None = None
     run_name: str | None = None
     wandb_enabled: bool = False
-    entity: str = MISSING
+    entity: str | None = None
 
 
 class WandBWrapper:
