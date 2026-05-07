@@ -1,0 +1,150 @@
+# =====================================================================
+# Python
+# =====================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+*.manifest
+*.spec
+
+# =====================================================================
+# Virtual environments
+# =====================================================================
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# =====================================================================
+# Package managers
+# =====================================================================
+# uv lock can be committed; uncomment if you want to ignore it
+# uv.lock
+.uv/
+
+# =====================================================================
+# Type checking / linting / testing caches
+# =====================================================================
+.mypy_cache/
+.pyright/
+.pytype/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# =====================================================================
+# IDE / OS
+# =====================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =====================================================================
+# Jupyter / notebooks
+# =====================================================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =====================================================================
+# Hydra outputs
+# =====================================================================
+outputs/
+multirun/
+.hydra/
+
+# =====================================================================
+# Project-specific runtime artifacts
+# (created by src/train.py setup_environment)
+# =====================================================================
+checkpoints/
+logs/
+results/
+weights/
+*.log
+
+# =====================================================================
+# ML experiment trackers
+# =====================================================================
+wandb/
+mlruns/
+lightning_logs/
+tb_logs/
+tensorboard/
+
+# =====================================================================
+# Data (do not commit raw or processed datasets)
+# =====================================================================
+data/
+*.h5
+*.hdf5
+*.mat
+*.npy
+*.npz
+*.parquet
+*.feather
+*.arrow
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# =====================================================================
+# Secrets / credentials (NEVER commit)
+# =====================================================================
+.env
+.env.*
+!.env.example
+settings.json
+credentials.json
+*.pem
+*.key
+*_secret*
+*_token*
+
+# =====================================================================
+# Claude / AI assistant
+# =====================================================================
+.claude/
+CLAUDE.local.md
+
+# =====================================================================
+# Misc temporary files
+# =====================================================================
+tmp/
+temp/
+.cache/
+*.bak
+*.tmp
