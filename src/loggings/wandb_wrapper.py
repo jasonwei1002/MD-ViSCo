@@ -116,7 +116,7 @@ class WandBWrapper:
         if not self._should_initialize(is_rank0):
             return
 
-        self._initialize(is_rank0, config)
+        self._initialize(config)
 
     def _should_initialize(self, is_rank0: bool) -> bool:
         """Check if tracking should be initialized based on rank boolean."""
@@ -128,7 +128,7 @@ class WandBWrapper:
             and not self._initialized
         )
 
-    def _initialize(self, is_rank0: bool, config: Any):
+    def _initialize(self, config: Any):
         """Initialize SwanLab with rank-specific settings."""
         if swanlab is None:
             return
@@ -137,12 +137,15 @@ class WandBWrapper:
 
             flat_config = flatten_config(config)
 
-            swanlab.init(
-                workspace=self.entity,
-                project=self.project_name,
-                experiment_name=self.run_name,
-                config=flat_config,
-            )
+            init_kwargs: dict[str, Any] = {"config": flat_config}
+            if self.project_name is not None:
+                init_kwargs["project"] = self.project_name
+            if self.entity is not None:
+                init_kwargs["workspace"] = self.entity
+            if self.run_name is not None:
+                init_kwargs["experiment_name"] = self.run_name
+
+            swanlab.init(**init_kwargs)
             self._initialized = True
 
             logger.info("SwanLab initialized on rank 0")
@@ -160,7 +163,10 @@ class WandBWrapper:
             return
 
         try:
-            swanlab.log(metrics, step=step)
+            if step is None:
+                swanlab.log(metrics)
+            else:
+                swanlab.log(metrics, step=step)
         except Exception as e:
             logger.warning(f"Failed to log metrics to SwanLab: {e}")
 
@@ -236,6 +242,7 @@ class WandBWrapper:
         if not self._initialized or not is_rank0 or swanlab is None:
             return
 
+        del model  # SwanLab has no native gradient hook equivalent.
         if not getattr(self, "_watch_warned", False):
             logger.info(
                 "SwanLab has no direct equivalent of wandb.watch(); "
