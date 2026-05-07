@@ -24,6 +24,13 @@
 _target_: src.dataset.mimicperformaf_dataset.MimicPERFormAFDataset
 dataset_name: MimicPERFormAF
 
+# Vitals available in this dataset (AF classification — only ECG/PPG used).
+vitals_dataset:
+  _target_: src.dataset.base_dataset.VitalsDataset
+  channels:
+    ECG: 0
+    PPG: 0
+
 # Input size for models (controls automatic padding/trimming)
 # Default to 1024 for compatibility with existing models
 # Can be overridden in specific configs (e.g., 1250-sample segments)

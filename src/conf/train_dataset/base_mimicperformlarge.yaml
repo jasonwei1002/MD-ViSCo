@@ -23,6 +23,14 @@
 _target_: src.dataset.mimicperformlarge_dataset.MimicPERFormLargeDataset
 dataset_name: MimicPERFormLarge
 
+# Vitals available in this dataset (no ABP — only ECG/PPG/IMP exposed).
+vitals_dataset:
+  _target_: src.dataset.base_dataset.VitalsDataset
+  channels:
+    ECG: 0
+    PPG: 0
+    IMP: 0
+
 # Input size for models (controls automatic padding/trimming)
 # Signals are length 4001 at 125 Hz
 input_size: 4001

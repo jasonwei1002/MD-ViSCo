@@ -16,7 +16,7 @@ CHECKPOINT_EPOCH=100
 MODEL=mdvisco_approximation
 EVALUATOR=waveform_reconstruction_evaluator
 TEST_DATASET=test_pulsedb
-DIRECTION=ecg_ppg_abp_clinically_meaningful
+DIRECTION=ppg_ecg_multi_source
 DIRECTION_MODE=multi
 # ---------------------------------------------------------------------------
 

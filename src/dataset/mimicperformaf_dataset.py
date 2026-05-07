@@ -17,6 +17,7 @@ import logging
 
 # Standard library imports
 from dataclasses import dataclass
+from dataclasses import field
 
 import numpy as np
 import torch
@@ -28,6 +29,7 @@ from hydra.core.config_store import ConfigStore
 from src.dataset.base_dataset import BaseDataset
 from src.dataset.base_dataset import DatasetBaseConfig
 from src.dataset.base_dataset import Sample
+from src.dataset.base_dataset import VitalsDatasetConfig
 
 logger = logging.getLogger(__name__)
 

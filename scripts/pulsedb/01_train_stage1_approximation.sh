@@ -27,7 +27,7 @@ cd "$(dirname "$0")/../.."
 #     *imp* directions (IMP channel only exists in UCI)
 #     ppg2bp / ecg2bp / ppg2bp_ecg2bp    (BP scalar -> use stage-2 refinement)
 
-DIRECTION=ecg_ppg_abp_clinically_meaningful
+DIRECTION=ppg_ecg_multi_source
 DIRECTION_MODE=multi
 # Trainer yaml already pins the matching model in its defaults list, so we do
 # not pass a separate `model=` override here (Hydra rejects top-level model=).

@@ -18,6 +18,7 @@ import logging
 
 # Standard library imports
 from dataclasses import dataclass
+from dataclasses import field
 
 import numpy as np
 import torch
@@ -29,6 +30,7 @@ from hydra.core.config_store import ConfigStore
 from src.dataset.base_dataset import BaseDataset
 from src.dataset.base_dataset import DatasetBaseConfig
 from src.dataset.base_dataset import Sample
+from src.dataset.base_dataset import VitalsDatasetConfig
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,12 @@ class PulseDBConfig(DatasetBaseConfig):
 
     _target_: str = "src.dataset.pulsedb_dataset.PulseDBDataset"
     dataset_name: str = "PulseDB"
+
+    vitals_dataset: VitalsDatasetConfig | None = field(
+        default_factory=lambda: VitalsDatasetConfig(
+            channels={"ECG": 0, "PPG": 0, "ABP": 0, "BP": 0}
+        )
+    )
 
     input_size: int | None = 1280
 

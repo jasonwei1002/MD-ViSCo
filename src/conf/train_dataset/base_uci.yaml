@@ -20,6 +20,15 @@
 _target_: src.dataset.uci_dataset.UCIDataset
 dataset_name: UCI
 
+# Vitals available in this dataset (used by direction capability checks).
+vitals_dataset:
+  _target_: src.dataset.base_dataset.VitalsDataset
+  channels:
+    ECG: 0
+    PPG: 0
+    ABP: 0
+    BP: 0
+
 # Input size for models (controls automatic padding/trimming)
 input_size: 1024
 
