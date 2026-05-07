@@ -26,6 +26,10 @@ DIRECTION_MODE=single
 # Must match SOURCE_CHANNELS used in script 01 (largest len(direction.source) in
 # the chosen DIRECTION); checkpoint shape will mismatch otherwise.
 SOURCE_CHANNELS=2
+# Must match BATCH_SIZE used in script 01 -- checkpoint path embeds this value.
+BATCH_SIZE=256
+# Must match LEARNING_RATE used in script 01 -- checkpoint path embeds this value.
+LEARNING_RATE=3e-3
 # ---------------------------------------------------------------------------
 
 EXTRA_OVERRIDES=()
@@ -40,5 +44,7 @@ torchrun --standalone --nproc_per_node=1 --module src.test -m \
     evaluator.load_model_weights=true \
     evaluator.direction_mode="${DIRECTION_MODE}" \
     evaluator.model.in_channels="${SOURCE_CHANNELS}" \
+    evaluator.batch_size="${BATCH_SIZE}" \
+    evaluator.learning_rate="${LEARNING_RATE}" \
     directions@evaluator.directions="${DIRECTION}" \
     "${EXTRA_OVERRIDES[@]}"

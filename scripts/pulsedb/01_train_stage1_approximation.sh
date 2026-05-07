@@ -34,6 +34,12 @@ DIRECTION_MODE=single
 # 2 for ppg_ecg_multi_source). Models default to in_channels=1, so multi-source
 # directions need an explicit override.
 SOURCE_CHANNELS=2
+# Per-rank batch size. Global batch = BATCH_SIZE * nproc_per_node.
+# Checkpoint path embeds this value, so script 03 must use the same number.
+BATCH_SIZE=256
+# Optimizer learning rate. Checkpoint path embeds this value, so script 03
+# must use the same number.
+LEARNING_RATE=3e-3
 # Trainer yaml already pins the matching model in its defaults list, so we do
 # not pass a separate `model=` override here (Hydra rejects top-level model=).
 # Switch trainer to swap models, e.g. approximation_trainer_patchtst.
@@ -46,4 +52,6 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer="${TRAINER}" \
     trainer.direction_mode="${DIRECTION_MODE}" \
     trainer.model.in_channels="${SOURCE_CHANNELS}" \
+    trainer.batch_size="${BATCH_SIZE}" \
+    trainer.learning_rate="${LEARNING_RATE}" \
     directions@trainer.directions="${DIRECTION}"
