@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MD-ViSCo is a PyTorch + Hydra framework for multi-directional vital sign waveform conversion (ECG ↔ PPG ↔ ABP, plus IMP and BP scalar prediction). All entry points are thin Hydra wrappers; runtime orchestration lives in trainers and evaluators. Python 3.10, package name `mdvisco`.
+MD-ViSCo is a PyTorch + Hydra framework for multi-directional vital sign waveform conversion (ECG ↔ PPG ↔ ABP, plus IMP and BP scalar prediction). All entry points are thin Hydra wrappers; runtime orchestration lives in trainers and evaluators. Python 3.12 (the source uses PEP 701 multi-line f-strings), package name `mdvisco`.
 
 ## Common Commands
 
@@ -123,3 +123,31 @@ Refinement / BP-prediction trainers will not work with `train_mimic_perform_larg
 - Configs are dataclasses (not pydantic). `MISSING` from omegaconf is the standard sentinel for "must be set in YAML / overrides."
 - Logging: `logger = logging.getLogger(__name__)` per module. Avoid `print` for anything other than truly user-facing CLI scripts.
 - New plugin modules belong in the package matching their type (`src/model/foo.py`, `src/criterions/foo.py`, etc.). The `import_*()` walker picks them up automatically; no central registry edit needed.
+
+## Non-Obvious Gotchas
+
+### `WandBWrapper` is now a SwanLab adapter, not wandb
+[src/loggings/wandb_wrapper.py](src/loggings/wandb_wrapper.py) keeps the historical `WandBWrapper` / `WandBWrapperConfig` class names and the `wandb_enabled` / `progress_bar.wandb` attribute paths so existing yamls and ~30 call sites in trainers/evaluators continue to work — but **inside the wrapper every call now goes through `swanlab.init / log / finish` natively**. wandb the library is no longer a dependency. When extending logging:
+- Don't reintroduce `import wandb`. Use `swanlab` directly inside the wrapper.
+- `swanlab.init` types its `workspace / project / experiment_name` as required `str` (not `Optional[str]`); pass them via a kwargs dict that only includes non-None values, otherwise pyright complains.
+- `swanlab.watch` does not exist; the wrapper's `watch()` method is a no-op kept for backward compat.
+
+### Hydra defaults lists require `override` for re-specified groups
+When a child trainer/evaluator yaml re-specifies a default already set by its base (e.g. `base_approximation_trainer.yaml` sets `/processor@processor: waveform_processor`, and `approximation_trainer_mdvisco.yaml` wants `waveform_processor_ref_test`), the child entry **must** be prefixed with `override`:
+
+```yaml
+defaults:
+  - base_approximation_trainer
+  - override /processor@processor: waveform_processor_ref_test  # not just "/processor@processor: ..."
+```
+
+Without `override`, Hydra raises `Multiple values for processor@trainer.processor`. Existing files already affected: `approximation_trainer_mdvisco.yaml`, `approximation_trainer_gan.yaml`, `refinement_trainer_mdvisco.yaml`, `refinement_trainer_gan.yaml`, `refinement_trainer_ppg2abp.yaml`, `blood_pressure_p2ewgan_evaluator.yaml`, `waveform_reconstruction_p2ewgan_evaluator.yaml`. Don't strip `override` when reformatting.
+
+### `pyppg==1.0.73` lives in a `--no-deps` pip block
+[environment.yml](environment.yml) installs pyppg via `pip install --no-deps pyppg==1.0.73` because pyppg's lockfile-style hard pins (`scipy==1.9.1`, `numpy==1.23.2`, ...) conflict with the modern py3.12 stack. The actually-imported APIs (`pyPPG.preproc`, `Fiducials`, `pack_ppg._ErrorHandler`) work fine against newer libs. **Don't add other packages to that pip block** — the `--no-deps` flag is global to the pip install command and would strip their transitive deps too. SwanLab in particular must be installed separately (`pip install swanlab` post-env-creation, or via the macOS env file's separate pip block which has no `--no-deps`).
+
+## Helper Scripts
+
+[scripts/pulsedb/](scripts/pulsedb/) holds 4 launcher scripts for the canonical PulseDB train/eval flow (stage 1 approximation → stage 2 refinement → eval each stage). Parameters live as plain `VAR=value` assignments in an "Edit here" block at the top of each script — change the file, don't pass env vars. Direction defaults assume `ecg_ppg_abp_clinically_meaningful` (multi) for waveform stage and `ppg2bp_ecg2bp` (multi) for BP stage; 01 ↔ 03 must use the same direction (eval loads the trained checkpoint by direction tag), as must 02 ↔ 04.
+
+[scripts/sync_from_github.sh](scripts/sync_from_github.sh) force-aligns a server-side checkout to `origin/main` (`git fetch + reset --hard + clean -fd`). Tracked files get overwritten; untracked training products under `outputs/ checkpoints/ logs/ results/ data/` are preserved because they're already gitignored.

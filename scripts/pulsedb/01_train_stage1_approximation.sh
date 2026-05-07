@@ -29,14 +29,15 @@ cd "$(dirname "$0")/../.."
 
 DIRECTION=ecg_ppg_abp_clinically_meaningful
 DIRECTION_MODE=multi
-MODEL=mdvisco_approximation
+# Trainer yaml already pins the matching model in its defaults list, so we do
+# not pass a separate `model=` override here (Hydra rejects top-level model=).
+# Switch trainer to swap models, e.g. approximation_trainer_patchtst.
 TRAINER=approximation_trainer_mdvisco
 # ---------------------------------------------------------------------------
 
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
     train_dataset=train_pulsedb \
     test_dataset=test_pulsedb \
-    model="${MODEL}" \
     trainer="${TRAINER}" \
     trainer.direction_mode="${DIRECTION_MODE}" \
     trainer.directions="${DIRECTION}"
