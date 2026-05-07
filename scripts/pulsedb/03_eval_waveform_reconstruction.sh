@@ -23,6 +23,9 @@ EVALUATOR=waveform_reconstruction_evaluator
 TEST_DATASET=test_pulsedb
 DIRECTION=ppg_ecg_multi_source
 DIRECTION_MODE=single
+# Must match SOURCE_CHANNELS used in script 01 (largest len(direction.source) in
+# the chosen DIRECTION); checkpoint shape will mismatch otherwise.
+SOURCE_CHANNELS=2
 # ---------------------------------------------------------------------------
 
 EXTRA_OVERRIDES=()
@@ -36,5 +39,6 @@ torchrun --standalone --nproc_per_node=1 --module src.test -m \
     model@evaluator.model="${MODEL}" \
     evaluator.load_model_weights=true \
     evaluator.direction_mode="${DIRECTION_MODE}" \
+    evaluator.model.in_channels="${SOURCE_CHANNELS}" \
     directions@evaluator.directions="${DIRECTION}" \
     "${EXTRA_OVERRIDES[@]}"

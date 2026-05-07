@@ -29,6 +29,11 @@ cd "$(dirname "$0")/../.."
 
 DIRECTION=ppg_ecg_multi_source
 DIRECTION_MODE=single
+# Number of source vitals fed to the model in one forward pass. Must equal the
+# largest `len(direction.source)` in the chosen DIRECTION (e.g. 1 for ppg2abp,
+# 2 for ppg_ecg_multi_source). Models default to in_channels=1, so multi-source
+# directions need an explicit override.
+SOURCE_CHANNELS=2
 # Trainer yaml already pins the matching model in its defaults list, so we do
 # not pass a separate `model=` override here (Hydra rejects top-level model=).
 # Switch trainer to swap models, e.g. approximation_trainer_patchtst.
@@ -40,4 +45,5 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     test_dataset=test_pulsedb \
     trainer="${TRAINER}" \
     trainer.direction_mode="${DIRECTION_MODE}" \
+    trainer.model.in_channels="${SOURCE_CHANNELS}" \
     directions@trainer.directions="${DIRECTION}"
