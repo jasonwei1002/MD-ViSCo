@@ -26,7 +26,7 @@ defaults:
   - base_approximation_trainer
   - base_gan_trainer
   - /model@model: p2ewgan_approximation
-  - /criterion@criterion: wgan_gp_loss
+  - override /criterion@criterion: wgan_gp_loss
   - _self_
 
 n_critic: 3

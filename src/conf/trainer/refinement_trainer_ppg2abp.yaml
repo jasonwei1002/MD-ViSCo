@@ -23,7 +23,7 @@
 defaults:
   - base_refinement_waveform
   - /model@model: ppg2abp_cascade
-  - /criterion@criterion: deep_supervision_loss
+  - override /criterion@criterion: deep_supervision_loss
   - _self_
 
 scheduler: null

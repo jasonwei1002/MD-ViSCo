@@ -23,7 +23,7 @@
 # @package evaluator
 defaults:
   - waveform_reconstruction
-  - /model@model: p2ewgan_generator_inference
+  - override /model@model: p2ewgan_generator_inference
   - _self_
 
 checkpoint_mapping:

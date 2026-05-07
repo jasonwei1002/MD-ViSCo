@@ -22,7 +22,7 @@
 defaults:
   - base_approximation_trainer
   - /model@model: mdvisco_approximation
-  - /processor@processor: waveform_processor_ref_test
+  - override /processor@processor: waveform_processor_ref_test
   - _self_
 
 input_preprocessing:

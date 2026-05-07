@@ -25,7 +25,7 @@
 defaults:
   - base_refinement_scalar
   - /model@model: mdvisco_refinement
-  - /directions@directions: ppg2bp_ecg2bp
+  - override /directions@directions: ppg2bp_ecg2bp
   - /input_preprocessor@demographics_text_encoder: demographics_text_encoder
   - _self_
 

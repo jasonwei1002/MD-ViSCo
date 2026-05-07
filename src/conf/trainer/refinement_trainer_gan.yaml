@@ -28,7 +28,7 @@ defaults:
   - base_refinement_waveform
   - base_gan_trainer
   - /model@model: p2ewgan
-  - /criterion@criterion: wgan_gp_loss
+  - override /criterion@criterion: wgan_gp_loss
   - _self_
 
 trainer_name: WaveRecRef
