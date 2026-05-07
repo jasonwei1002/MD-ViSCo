@@ -51,6 +51,7 @@ class L1Loss(BaseCriterion):
         device: torch.device | None = None,
         name: str = "l1_loss",
         log_loss: bool = False,
+        **kwargs,
     ):
         """Initialize L1 Loss.
 
@@ -59,9 +60,15 @@ class L1Loss(BaseCriterion):
             device: Device to compute the loss on.
             name: Name for logging purposes.
             log_loss: Whether to log loss values.
+            **kwargs: Extra config fields from CriterionBaseConfig (e.g.
+                enabled) forwarded to the parent class.
         """
         super().__init__(
-            reduction=reduction, device=device, name=name, log_loss=log_loss
+            reduction=reduction,
+            device=device,
+            name=name,
+            log_loss=log_loss,
+            **kwargs,
         )
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
