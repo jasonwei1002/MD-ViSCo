@@ -18,7 +18,7 @@
 #
 # Usage:
 #   torchrun --standalone --nproc_per_node=1 --module src.train -m \
-#     model=patchtst trainer=approximation_trainer_patchtst \
+#     model@trainer.model=patchtst trainer=approximation_trainer_patchtst \
 #     train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 

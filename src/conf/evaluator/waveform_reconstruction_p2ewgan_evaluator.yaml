@@ -47,10 +47,10 @@ checkpoint_mapping:
 #
 # 3. Override direction:
 #    python -m src.test evaluator=waveform_reconstruction_p2ewgan_evaluator \
-#      evaluator.directions=ecg2abp
+#      directions@evaluator.directions=ecg2abp
 #
 # 4. Equivalent CLI override on waveform_reconstruction:
 #    python -m src.test evaluator=waveform_reconstruction \
-#      evaluator.model=p2ewgan_generator_inference \
+#      model@evaluator.model=p2ewgan_generator_inference \
 #      evaluator.checkpoint_mapping.model.checkpoint_key=generator_state_dict
 # ============================================================================

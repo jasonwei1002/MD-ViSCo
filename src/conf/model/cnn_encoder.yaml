@@ -11,7 +11,7 @@
 #   All architecture params inherited from base_cnn_encoder dataclass defaults
 #
 # Usage:
-#   torchrun --standalone --nproc_per_node=1 --module src.train -m model=cnn_encoder \
+#   torchrun --standalone --nproc_per_node=1 --module src.train -m model@trainer.model=cnn_encoder \
 #     trainer=classification_trainer train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 

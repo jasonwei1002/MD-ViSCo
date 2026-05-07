@@ -14,7 +14,7 @@
 #   - Checkpoints from approximation or refinement training are compatible; use same config name.
 #
 # Usage:
-#   torchrun --standalone --nproc_per_node=1 --module src.train -m model=p2ewgan trainer=approximation_trainer_gan train_dataset=train_uci test_dataset=test_uci
+#   torchrun --standalone --nproc_per_node=1 --module src.train -m model@trainer.model=p2ewgan trainer=approximation_trainer_gan train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

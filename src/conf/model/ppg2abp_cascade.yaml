@@ -13,7 +13,7 @@
 #   - Stage1: base_channels=64; Stage2: alpha=2.5 (paper defaults)
 #
 # Usage:
-#   torchrun --module src.train -m model=ppg2abp_cascade trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=ppg2abp_cascade trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

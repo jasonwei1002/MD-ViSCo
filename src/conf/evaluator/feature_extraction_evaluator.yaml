@@ -17,8 +17,8 @@
 #   - processor: waveform_processor_ecg_features (ECG feature extraction processor)
 #
 # Notes:
-#   - Default direction: ppg2ecg (can be overridden via CLI: directions=ecg2ppg)
-#   - Default model: wavenet (can be overridden via CLI: model=mdvisco_approximation_uci)
+#   - Default direction: ppg2ecg (can be overridden via CLI: directions@evaluator.directions=ecg2ppg)
+#   - Default model: wavenet (can be overridden via CLI: model@evaluator.model=mdvisco_approximation_uci)
 #   - Processor ensures evaluator feature extraction uses post-processed waveforms
 #   - Default pairs the ECG extractor with the default direction (ppg2ecg)
 #   - Override with processor=waveform_processor_ppg_features when extracting PPG features
@@ -34,8 +34,8 @@ defaults:
   - /checkpoint_manager@checkpoint_managers.save: checkpoint_manager
   - /checkpoint_io@checkpoint_io: checkpoint_io
   - /progress_bar@progress_bar: progress_bar
-  - /directions@directions: ppg2ecg  # Default direction, can be overridden via CLI: directions=ecg2ppg
-  - /model@model: wavenet  # Default model, can be overridden via CLI: model=mdvisco_approximation_uci
+  - /directions@directions: ppg2ecg  # Default direction, can be overridden via CLI: directions@evaluator.directions=ecg2ppg
+  - /model@model: wavenet  # Default model, can be overridden via CLI: model@evaluator.model=mdvisco_approximation_uci
   # Processor ensures evaluator feature extraction uses post-processed waveforms
   # Default pairs the ECG extractor with the default direction (ppg2ecg). Override with
   # `processor=waveform_processor_ppg_features` when extracting PPG features (ecg2ppg/abp2ppg).
@@ -117,8 +117,8 @@ checkpoint_mapping:
 #    features from ground truth waveforms without model inference (processor with extractor remains required)
 #
 # CLI Override Examples:
-# - Change direction: python test.py evaluator=feature_extraction_evaluator directions=ecg2ppg
-# - Change model: python test.py evaluator=feature_extraction_evaluator model=mdvisco_approximation_uci
+# - Change direction: python test.py evaluator=feature_extraction_evaluator directions@evaluator.directions=ecg2ppg
+# - Change model: python test.py evaluator=feature_extraction_evaluator model@evaluator.model=mdvisco_approximation_uci
 # - Change output: python test.py evaluator=feature_extraction_evaluator evaluator.output_dir=results/my_features
 # - GT-only (model disabled):
 #     python -m src.test evaluator=feature_extraction_evaluator model@evaluator.model=null evaluator.load_model_weights=false
@@ -135,7 +135,7 @@ checkpoint_mapping:
 # 3. Omit checkpoint-related parameters: checkpoint_epoch, trainer_name
 #
 # Example CLI: python -m src.test evaluator=feature_extraction_evaluator test_dataset=test_uci \
-#   evaluator.load_model_weights=false evaluator.directions=ppg2ecg \
+#   evaluator.load_model_weights=false directions@evaluator.directions=ppg2ecg \
 #   +evaluator.model=null +evaluator.checkpoint_managers=null +evaluator.checkpoint_io=null
 #
 # Output: Features saved with origin="ground_truth", model_name="ground_truth"
@@ -152,8 +152,8 @@ checkpoint_mapping:
 #
 # 2. Override direction or model:
 #    python -m src.test evaluator=feature_extraction_evaluator \
-#      evaluator.directions=ecg2ppg \
-#      evaluator.model=mdvisco_approximation_uci
+#      directions@evaluator.directions=ecg2ppg \
+#      model@evaluator.model=mdvisco_approximation_uci
 #
 # 3. Override processor for PPG feature extraction:
 #    python -m src.test evaluator=feature_extraction_evaluator \

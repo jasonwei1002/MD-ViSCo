@@ -29,5 +29,5 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer="${TRAINER}" \
     train_dataset="${TRAIN_DATASET}" \
     trainer.direction_mode="${DIRECTION_MODE}" \
-    trainer.directions="${DIRECTION}" \
+    directions@trainer.directions="${DIRECTION}" \
     checkpoint_managers.load.base_dir="${STAGE1_CKPT_DIR}"

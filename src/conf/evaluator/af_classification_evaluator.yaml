@@ -54,7 +54,7 @@ input_preprocessing:
 #
 # 2. Override model or processor:
 #    python -m src.test evaluator=af_classification_evaluator \
-#      evaluator.model=af_classifier_cascade \
+#      model@evaluator.model=af_classifier_cascade \
 #      evaluator.processor.threshold=0.3
 #
 # 3. Override checkpoint path:

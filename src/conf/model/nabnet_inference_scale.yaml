@@ -13,7 +13,7 @@
 #   - For inference only; waveform unscaled using predicted SBP/DBP.
 #
 # Usage:
-#   torchrun --module src.train -m model=nabnet_inference_scale trainer=... \
+#   torchrun --module src.train -m model@trainer.model=nabnet_inference_scale trainer=... \
 #     train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 

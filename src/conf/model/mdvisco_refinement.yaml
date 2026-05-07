@@ -16,7 +16,7 @@
 #   - PatchTSMixer for waveform encoding, DistilBERT for patient demographics (PI mode)
 #
 # Usage:
-#   torchrun --module src.train -m model=mdvisco_refinement trainer=refinement_trainer_mdvisco train_dataset=train_uci_refinement_abp test_dataset=test_uci_refinement_abp
+#   torchrun --module src.train -m model@trainer.model=mdvisco_refinement trainer=refinement_trainer_mdvisco train_dataset=train_uci_refinement_abp test_dataset=test_uci_refinement_abp
 # ============================================================================
 
 defaults:

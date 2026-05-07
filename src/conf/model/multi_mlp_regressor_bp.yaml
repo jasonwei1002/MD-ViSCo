@@ -15,7 +15,7 @@
 #   - Output format: Dict with keys 'y_pred_sbp' [B,1] and 'y_pred_dbp' [B,1]. Canonical for stage-2 BP refinement; [B,2] no longer supported.
 #
 # Usage:
-#   torchrun --standalone --nproc_per_node=1 --module src.train -m model=multi_mlp_regressor_bp \
+#   torchrun --standalone --nproc_per_node=1 --module src.train -m model@trainer.model=multi_mlp_regressor_bp \
 #     trainer=refinement_trainer_nabnet train_dataset=... test_dataset=...
 # ============================================================================
 

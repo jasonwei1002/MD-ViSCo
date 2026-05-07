@@ -16,7 +16,7 @@
 #
 # Usage:
 #   torchrun --standalone --nproc_per_node=1 --module src.train -m \
-#     model=wavenet trainer=approximation_trainer_wavenet \
+#     model@trainer.model=wavenet trainer=approximation_trainer_wavenet \
 #     train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 

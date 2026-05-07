@@ -15,7 +15,7 @@
 #   - Stage2 input_length matches CNNEncoder output via encoder_output_size resolver.
 #
 # Usage:
-#   torchrun --standalone --nproc_per_node=1 --module src.train -m model=af_classifier_cascade \
+#   torchrun --standalone --nproc_per_node=1 --module src.train -m model@trainer.model=af_classifier_cascade \
 #     trainer=classification_trainer train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 

@@ -139,10 +139,10 @@ checkpoint_mapping:
 #
 # 3. Override model or processor:
 #    python -m src.test evaluator=blood_pressure_evaluator \
-#      evaluator.model=mdvisco_inference_scale \
+#      model@evaluator.model=mdvisco_inference_scale \
 #      evaluator.processor=waveform_processor_test
 #
 # 4. Override direction:
 #    python -m src.test evaluator=blood_pressure_evaluator \
-#      evaluator.directions=ecg2abp
+#      directions@evaluator.directions=ecg2abp
 # ============================================================================

@@ -15,7 +15,7 @@
 #   - Refinement stage for waveform-to-waveform conversion; use_transconv=true
 #
 # Usage:
-#   torchrun --module src.train -m model=shallowunet trainer=refinement_trainer_shallowunet train_dataset=train_uci_refinement_abp test_dataset=test_uci_refinement_abp
+#   torchrun --module src.train -m model@trainer.model=shallowunet trainer=refinement_trainer_shallowunet train_dataset=train_uci_refinement_abp test_dataset=test_uci_refinement_abp
 # ============================================================================
 
 defaults:

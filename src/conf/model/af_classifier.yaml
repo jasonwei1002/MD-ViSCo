@@ -14,7 +14,7 @@
 #   - For cascade usage, use af_classifier_cascade; stage2 input_length is set via cascade.
 #
 # Usage:
-#   torchrun --standalone --nproc_per_node=1 --module src.train -m model=af_classifier \
+#   torchrun --standalone --nproc_per_node=1 --module src.train -m model@trainer.model=af_classifier \
 #     trainer=classification_trainer train_dataset=train_mimic_perform_af_1024 \
 #     test_dataset=test_mimic_perform_af_1024
 # ============================================================================

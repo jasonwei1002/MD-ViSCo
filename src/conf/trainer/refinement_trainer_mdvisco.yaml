@@ -59,7 +59,7 @@ input_preprocessing:
 #
 # 2. Override direction:
 #    python -m src.train trainer=refinement_trainer_mdvisco \
-#      directions=ppg2abp
+#      directions@trainer.directions=ppg2abp
 #
 # 3. Override training parameters:
 #    python -m src.train trainer=refinement_trainer_mdvisco \

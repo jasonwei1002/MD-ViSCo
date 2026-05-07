@@ -86,10 +86,10 @@ checkpoint_mapping:
 #
 # 3. Override model or processor:
 #    python -m src.test evaluator=waveform_reconstruction_evaluator \
-#      evaluator.model=nabnet_approximation \
+#      model@evaluator.model=nabnet_approximation \
 #      evaluator.processor=waveform_processor_ref_test
 #
 # 4. Override direction:
 #    python -m src.test evaluator=waveform_reconstruction_evaluator \
-#      evaluator.directions=ecg2abp
+#      directions@evaluator.directions=ecg2abp
 # ============================================================================

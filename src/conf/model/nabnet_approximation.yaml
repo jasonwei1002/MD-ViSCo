@@ -15,7 +15,7 @@
 #   - MIMIC: override with model_depth=5, model_width=32, attention_type=lstm
 #
 # Usage:
-#   torchrun --module src.train -m model=nabnet_approximation trainer=approximation_trainer_nabnet train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=nabnet_approximation trainer=approximation_trainer_nabnet train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

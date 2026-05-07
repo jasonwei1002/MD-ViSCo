@@ -21,4 +21,4 @@ torchrun --standalone --nproc_per_node=1 --module src.test -m \
     evaluator.load_model_weights=true \
     evaluator.checkpoint_epoch="${CHECKPOINT_EPOCH}" \
     evaluator.direction_mode="${DIRECTION_MODE}" \
-    evaluator.directions="${DIRECTION}"
+    directions@evaluator.directions="${DIRECTION}"

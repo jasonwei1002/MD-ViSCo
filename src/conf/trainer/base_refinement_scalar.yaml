@@ -53,7 +53,7 @@ is_finetuning: true
 #
 # 2. Override direction:
 #    python -m src.train trainer=refinement_trainer_nabnetbp \
-#      directions=ecg2abp
+#      directions@trainer.directions=ecg2abp
 #
 # 3. Override checkpoint loading:
 #    python -m src.train trainer=refinement_trainer_nabnetbp \

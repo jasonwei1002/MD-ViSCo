@@ -13,7 +13,7 @@
 #   - Override to experimental variant: model.base_channels=96
 #
 # Usage:
-#   torchrun --module src.train -m model=ppg2abp_approximation trainer=approximation_trainer train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=ppg2abp_approximation trainer=approximation_trainer train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

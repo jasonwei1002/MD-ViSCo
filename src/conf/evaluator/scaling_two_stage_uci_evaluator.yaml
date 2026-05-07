@@ -142,7 +142,7 @@ trainer_name: scaling_two_stage
 #
 # 2. Override model:
 #    python -m src.test evaluator=scaling_two_stage_uci_evaluator \
-#      evaluator.model=mdvisco_inference_scale
+#      model@evaluator.model=mdvisco_inference_scale
 #
 # 3. Override checkpoint paths:
 #    python -m src.test evaluator=scaling_two_stage_uci_evaluator \
@@ -151,5 +151,5 @@ trainer_name: scaling_two_stage
 #
 # 4. Override direction:
 #    python -m src.test evaluator=scaling_two_stage_uci_evaluator \
-#      evaluator.directions=ecg2abp
+#      directions@evaluator.directions=ecg2abp
 # ============================================================================

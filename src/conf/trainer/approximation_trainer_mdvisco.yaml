@@ -49,7 +49,7 @@ input_preprocessing:
 #
 # 2. Override direction:
 #    python -m src.train trainer=approximation_trainer_mdvisco \
-#      directions=ecg_ppg_abp
+#      directions@trainer.directions=ecg_ppg_abp
 #
 # 3. Override model parameters:
 #    python -m src.train trainer=approximation_trainer_mdvisco \

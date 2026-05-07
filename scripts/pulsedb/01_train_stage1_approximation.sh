@@ -40,4 +40,4 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     test_dataset=test_pulsedb \
     trainer="${TRAINER}" \
     trainer.direction_mode="${DIRECTION_MODE}" \
-    trainer.directions="${DIRECTION}"
+    directions@trainer.directions="${DIRECTION}"

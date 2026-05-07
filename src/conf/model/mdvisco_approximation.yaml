@@ -14,7 +14,7 @@
 #   - Automatically adapts to dataset input_size via Hydra interpolation
 #
 # Usage:
-#   torchrun --module src.train -m model=mdvisco_approximation trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=mdvisco_approximation trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

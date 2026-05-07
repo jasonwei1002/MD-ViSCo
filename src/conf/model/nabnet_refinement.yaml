@@ -14,7 +14,7 @@
 #   - Output format: {'sbp', 'dbp'} (no waveform prediction)
 #
 # Usage:
-#   torchrun --module src.train -m model=nabnet_refinement trainer=refinement_trainer_nabnet train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=nabnet_refinement trainer=refinement_trainer_nabnet train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

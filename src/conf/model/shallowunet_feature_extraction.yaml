@@ -15,7 +15,7 @@
 #   - Paper default model_width=128; override via model.model_width=84 if needed
 #
 # Usage:
-#   torchrun --module src.train -m model=shallowunet_feature_extraction trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
+#   torchrun --module src.train -m model@trainer.model=shallowunet_feature_extraction trainer=approximation_trainer_mdvisco train_dataset=train_uci test_dataset=test_uci
 # ============================================================================
 
 defaults:

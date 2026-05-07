@@ -50,11 +50,11 @@ defaults:
 #
 # 2. Override direction:
 #    python -m src.train trainer=classification_trainer \
-#      directions=ecg2ppg
+#      directions@trainer.directions=ecg2ppg
 #
 # 3. Override model or processor:
 #    python -m src.train trainer=classification_trainer \
-#      model=af_classifier \
+#      model@trainer.model=af_classifier \
 #      processor.threshold=0.3
 #
 # 4. Override checkpoint paths:
