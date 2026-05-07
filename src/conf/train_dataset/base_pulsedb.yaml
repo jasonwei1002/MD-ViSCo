@@ -8,7 +8,7 @@
 #   and splitting strategies.
 #
 # Base:
-#   - _target_: src.dataset.pulsedb_dataset.PulseDBConfig
+#   - _target_: src.dataset.pulsedb_dataset.PulseDBDataset
 #
 # Notes:
 #   - PulseDB BP range: DBP 2.34 mmHg, SBP up to 286.58 mmHg
@@ -17,7 +17,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.pulsedb_dataset.PulseDBConfig
+_target_: src.dataset.pulsedb_dataset.PulseDBDataset
 dataset_name: PulseDB
 
 # Input size for models (controls automatic padding/trimming)

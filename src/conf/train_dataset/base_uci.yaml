@@ -8,7 +8,7 @@
 #   and splitting strategies.
 #
 # Base:
-#   - _target_: src.dataset.uci_dataset.UCIConfig
+#   - _target_: src.dataset.uci_dataset.UCIDataset
 #
 # Notes:
 #   - UCI BP range: DBP 50.0 mmHg, SBP up to 189.98 mmHg
@@ -17,7 +17,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.uci_dataset.UCIConfig
+_target_: src.dataset.uci_dataset.UCIDataset
 dataset_name: UCI
 
 # Input size for models (controls automatic padding/trimming)

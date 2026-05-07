@@ -8,7 +8,7 @@
 #   and AF classification task configuration.
 #
 # Base:
-#   - _target_: src.dataset.mimicperformaf_dataset.MimicPERFormAFConfig
+#   - _target_: src.dataset.mimicperformaf_dataset.MimicPERFormAFDataset
 #
 # Notes:
 #   - This dataset is used for AF classification, not BP prediction
@@ -21,7 +21,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.mimicperformaf_dataset.MimicPERFormAFConfig
+_target_: src.dataset.mimicperformaf_dataset.MimicPERFormAFDataset
 dataset_name: MimicPERFormAF
 
 # Input size for models (controls automatic padding/trimming)
