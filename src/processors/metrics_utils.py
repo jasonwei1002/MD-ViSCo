@@ -562,7 +562,11 @@ def _maybe_denormalize_tensor(
         )
 
     original_device = tensor.device
-    tensor_np = tensor.detach().cpu().numpy()
+    # Upcast to float32 before NumPy: NumPy has no bfloat16 dtype, so a bf16
+    # tensor (e.g. produced under bf16 AMP autocast) would raise
+    # "Got unsupported ScalarType BFloat16". float() is lossless for bf16->f32
+    # and a no-op for tensors already in float32.
+    tensor_np = tensor.detach().cpu().float().numpy()
     tensor_np = global_min_max_norm(
         tensor_np,
         global_min_max={"min": global_min, "max": global_max},
