@@ -118,6 +118,40 @@ torchrun --standalone --nproc_per_node=1 --module src.test -m \
 
 Checkpoint paths embed `batch_size / num_epochs / learning_rate / seed` (and scheduler/early-stopping patience). Evaluation overrides must **reproduce the training values** or the path won't resolve. Two-stage eval loads stage1/stage2 from separate `weights/pretrained/{stage1,stage2}/` dirs.
 
+### PulseDB full-feature refinement (demographics / PI mode)
+
+The stock `mdvisco_refinement` ships in **UCI mode** (`pi: false`, `text_encoder_pipeline: null`) — demographics are present in the batch but the model does not consume them. The paper's full PulseDB variant (§6.2.2, DistilBERT demographic-text-embedding fusion) uses two **added** configs:
+
+- `model=mdvisco_refinement_pulsedb` (`src/conf/model/mdvisco_refinement_pulsedb.yaml`) — adds `text_encoder_pipeline` (DistilBERT, 768→512 to match `projection_dim`) and sets `vital_encoders.{ppg,ecg}.pi: true`. `BPModel` derives PI purely from `text_encoder_pipeline is not None` (`mdvisco.py:3847`), so setting the pipeline is what turns PI on.
+- `trainer=refinement_trainer_mdvisco_pulsedb` (`src/conf/trainer/refinement_trainer_mdvisco_pulsedb.yaml`) — same as `refinement_trainer_mdvisco` but swaps in the PI model. Defined standalone off `base_refinement_scalar` (not by inheriting the other trainer), with `override /directions@directions:` placed **after** the append entries to avoid Hydra "Multiple values" errors.
+
+Verified-runnable command (composes with 0 missing fields; PPG+ECG→SBP/DBP, multi-WCL, 60 epochs):
+
+```bash
+torchrun --standalone --nproc_per_node=1 --module src.train -m \
+    trainer=refinement_trainer_mdvisco_pulsedb \
+    trainer.use_patient_information=true \
+    train_dataset=train_pulsedb_refinement_bp \
+    test_dataset=test_pulsedb_refinement_bp \
+    train_dataset.dataset_path=<dataset_path> test_dataset.dataset_path=<dataset_path> \
+    trainer.progress_bar.wandb_wrapper.project_name=<proj> \
+    trainer.progress_bar.wandb_wrapper.entity=<entity>
+```
+
+- `trainer.use_patient_information=true` is **mandatory** (`config.yaml` marks it `???`); it gates demographics and tags the checkpoint path `_PI_True`.
+- W&B `project_name` / `entity` are the only other mandatory `???` — or disable logging with `trainer.progress_bar.wandb_wrapper=null`.
+- `ppg2bp_ecg2bp` resolves to **one multi-source** direction (`[PPG,ECG]→BP`), so the auto `direction_mode=single` is correct — do **not** force `multi`.
+- DistilBERT (`distilbert-base-uncased`) loads via `from_pretrained` **without** `from_tf=True`, so a PyTorch/safetensors weight cache is required (a TF-only cache raises `OSError`).
+- Pre-flight on any new env: `python -m src.train --cfg job --resolve <same overrides>` composes only (no GPU/data) and surfaces missing fields / wiring.
+
+### Local modifications to this snapshot (diverges from upstream)
+
+Three changes were made so training runs on **Python 3.12 + omegaconf 2.3.0 + hydra 1.3.2** (the upstream entry point crashes at import on this stack):
+
+- `src/trainers/trainer.py` — moved 7 `*Config` imports (`CriterionBaseConfig`, `CheckpointManagerConfig`, `CheckpointIOConfig`, `ProgressBarConfig`, `EarlyStoppingConfig`, `DirectionsConfig`, `BasePreprocessorConfig`) out of the `TYPE_CHECKING` block to runtime. Without it, `cs.store()` → `OmegaConf.structured()` → `get_type_hints()` raises `NameError: CriterionBaseConfig` at import and **every** trainer fails to register.
+- Added the two `*_pulsedb` configs documented above.
+- **Known unfixed upstream bug**: `trainer/refinement_trainer_mdvisco.yaml` (and other trainers) select `directions` without the `override` keyword while `base_refinement_scalar` already set `ppg2abp`, so they fail to compose on Hydra 1.3.x with "Multiple values for directions@trainer.directions". Use the `_pulsedb` trainer, or add `override` to the directions default before running the non-PI variant.
+
 ### Code quality (upstream gate — no config files vendored here)
 
 ```bash
