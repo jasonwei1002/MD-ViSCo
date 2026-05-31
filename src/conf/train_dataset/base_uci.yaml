@@ -17,7 +17,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.uci_dataset.UCIConfig
+_target_: src.dataset.uci_dataset.UCIDataset
 dataset_name: UCI
 
 # Input size for models (controls automatic padding/trimming)

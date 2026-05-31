@@ -17,7 +17,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.pulsedb_dataset.PulseDBConfig
+_target_: src.dataset.pulsedb_dataset.PulseDBDataset
 dataset_name: PulseDB
 
 # Input size for models (controls automatic padding/trimming)

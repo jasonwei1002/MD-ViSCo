@@ -146,10 +146,12 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
 
 ### Local modifications to this snapshot (diverges from upstream)
 
-Three changes were made so training runs on **Python 3.12 + omegaconf 2.3.0 + hydra 1.3.2** (the upstream entry point crashes at import on this stack):
+These changes were made so training runs on **Python 3.12 + omegaconf 2.3.0 + hydra 1.3.2** (the upstream entry point crashes at import on this stack):
 
 - `src/trainers/trainer.py` — moved 7 `*Config` imports (`CriterionBaseConfig`, `CheckpointManagerConfig`, `CheckpointIOConfig`, `ProgressBarConfig`, `EarlyStoppingConfig`, `DirectionsConfig`, `BasePreprocessorConfig`) out of the `TYPE_CHECKING` block to runtime. Without it, `cs.store()` → `OmegaConf.structured()` → `get_type_hints()` raises `NameError: CriterionBaseConfig` at import and **every** trainer fails to register.
+- `src/conf/train_dataset/base_{pulsedb,uci,mimicperformaf,mimicperformlarge}.yaml` — fixed `_target_` from the **config** class (`*Config`) to the **dataset** class (`*Dataset`). The schema dataclass already declares the correct `_target_: *Dataset`, but each base YAML re-declared `_target_: *Config` (matches upstream `main`). On Hydra 1.3.x the same-named YAML value **overrides** the schema default, so `instantiate(cfg.train_dataset)` built a `PulseDBConfig` dataclass instead of the dataset → `create_single_dataset` crashes with `TypeError: object of type 'PulseDBConfig' has no len()`. The `test_dataset` group has no YAML (only the registered schema), so it was unaffected. Setting the YAML `_target_` to `*Dataset` makes both merge orders agree.
 - Added the two `*_pulsedb` configs documented above.
+- `src/criterions/{l1_loss,mse_loss}.py` — added `**kwargs` forwarding to accept the inherited `enabled` field; `src/trainers/trainer.py::on_checkpoint_loaded` made a concrete no-op (was `@abstractmethod`, blocking `ScalarRegressionTrainer` instantiation).
 - **Known unfixed upstream bug**: `trainer/refinement_trainer_mdvisco.yaml` (and other trainers) select `directions` without the `override` keyword while `base_refinement_scalar` already set `ppg2abp`, so they fail to compose on Hydra 1.3.x with "Multiple values for directions@trainer.directions". Use the `_pulsedb` trainer, or add `override` to the directions default before running the non-PI variant.
 
 ### Code quality (upstream gate — no config files vendored here)

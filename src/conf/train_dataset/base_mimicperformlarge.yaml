@@ -20,7 +20,7 @@
 #
 # ============================================================================
 
-_target_: src.dataset.mimicperformlarge_dataset.MimicPERFormLargeConfig
+_target_: src.dataset.mimicperformlarge_dataset.MimicPERFormLargeDataset
 dataset_name: MimicPERFormLarge
 
 # Input size for models (controls automatic padding/trimming)
