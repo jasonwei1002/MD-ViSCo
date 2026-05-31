@@ -131,6 +131,7 @@ Verified-runnable command (composes with 0 missing fields; PPG+ECG→SBP/DBP, mu
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_patient_information=true \
+    trainer.overwrite_checkpoint=true \
     train_dataset=train_pulsedb_refinement_bp \
     test_dataset=test_pulsedb_refinement_bp \
     train_dataset.dataset_path=<dataset_path> test_dataset.dataset_path=<dataset_path> \
@@ -139,6 +140,7 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
 ```
 
 - `trainer.use_patient_information=true` is **mandatory** (`config.yaml` marks it `???`); it gates demographics and tags the checkpoint path `_PI_True`.
+- `trainer.overwrite_checkpoint=true` is **required for any multi-epoch run**. The best-model checkpoint is a single rolling file (`epoch=None` → no `_epoch_N` suffix, e.g. `PPG+ECG2BP_checkpoint_S_42.pt`), re-saved every time val improves (`scalar_regression_trainer.py:642-667`). With the resolved default `overwrite_checkpoint=false`, `CheckpointManager.build_path(key="save", overwrite=False)` raises `ValueError: Checkpoint exists ... overwrite is False` on the **second** best-improvement (or first, if a stale ckpt from a prior run exists) — so training crashes mid-run. `config.yaml` marks `overwrite_checkpoint: ???`, i.e. it is a user decision; the schema default fills it to `false`, which only survives a compose check, not real training. Deleting the stale file alone is **not** a fix (next improvement re-crashes).
 - W&B `project_name` / `entity` are the only other mandatory `???` — or disable logging with `trainer.progress_bar.wandb_wrapper=null`.
 - `ppg2bp_ecg2bp` resolves to **one multi-source** direction (`[PPG,ECG]→BP`), so the auto `direction_mode=single` is correct — do **not** force `multi`.
 - DistilBERT (`distilbert-base-uncased`) loads via `from_pretrained` **without** `from_tf=True`, so a PyTorch/safetensors weight cache is required (a TF-only cache raises `OSError`).
