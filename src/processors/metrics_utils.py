@@ -505,20 +505,34 @@ def _calculate_bp_error_metrics(
 
 def _calculate_bhs(
     metrics: dict[str, Tensor], thresholds: Iterable[float] | None
-) -> dict[str, dict[float, int]]:
+) -> dict[str, dict[float, float]]:
+    """BHS cumulative grades: share of samples whose absolute error is within
+    each threshold (mmHg), as a percentage in ``[0, 100]``.
+
+    Returns a *per-batch percentage* (``100 * count / N``), not a raw count.
+    The trainer flattens these and averages them across batches (the same
+    per-batch-mean -> cross-batch-mean scheme it uses for MAE/ME), so a
+    percentage aggregates to the BHS grade. A raw count would instead average
+    to a meaningless "mean hits per batch" (e.g. >100, which is impossible for
+    a percentage). Mirrors the evaluator's ``(count / total) * 100`` in
+    ``src/evaluators/blood_pressure.py``.
+    """
     default_thresholds = [5, 10, 15]
     thresholds_list = list(thresholds) if thresholds is not None else default_thresholds
 
-    bhs_results: dict[str, dict[float, int]] = {}
+    bhs_results: dict[str, dict[float, float]] = {}
     for bp_type in ("sbp", "dbp", "map"):
         metric_tensor = metrics.get(f"{bp_type}_mae")
         if metric_tensor is None:
             continue
 
+        total = metric_tensor.numel()
         bhs_results[bp_type] = {}
         for threshold in thresholds_list:
             count = int((metric_tensor <= threshold).sum().item())
-            bhs_results[bp_type][float(threshold)] = count
+            bhs_results[bp_type][float(threshold)] = (
+                100.0 * count / total if total > 0 else 0.0
+            )
 
     return bhs_results
 
