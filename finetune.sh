@@ -43,6 +43,7 @@ fi
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_wcl=true \
+    trainer.batch_size=1024 \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
     "${WARMSTART_OVERRIDE[@]}" \

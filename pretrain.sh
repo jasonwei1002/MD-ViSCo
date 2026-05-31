@@ -27,6 +27,7 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.is_pretraining=true \
     trainer.is_finetuning=false \
     trainer.use_wcl=true \
+    trainer.batch_size=1024 \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
     train_dataset=train_pulsedb_refinement_pretrain_bp \
