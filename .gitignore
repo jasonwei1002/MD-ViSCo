@@ -1,0 +1,62 @@
+# ============================================================================
+# MD-ViSCo .gitignore
+# ============================================================================
+
+# --- Raw / preprocessed datasets (huge — never commit) ---
+# PulseDB subsets (Train_Subset.mat ~26GB, CalFree_Test_Subset.mat ~3.3GB), HDF5, etc.
+*.mat
+*.h5
+*.hdf5
+data/
+datasets/
+
+# --- Experiment outputs / checkpoints / logs ---
+# Hydra single-run output dirs
+outputs/
+# Hydra -m multirun output dirs
+multirun/
+# Default checkpoint save base_dir (./weights/)
+weights/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+# e.g. training.log
+*.log
+# Weights & Biases run dirs
+wandb/
+
+# --- Hydra ---
+.hydra/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+.env
+.python-version
+
+# --- Tooling caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# --- Local model / HF caches (only if cached inside the repo) ---
+# .cache/
+
+# --- Editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

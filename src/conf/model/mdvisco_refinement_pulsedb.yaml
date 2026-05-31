@@ -1,0 +1,69 @@
+# ============================================================================
+# MD-ViSCo Refinement Model (BPModel) – PulseDB Full Configuration (with PI)
+# ============================================================================
+# Paper: MD-ViSCo (IEEE J. Biomed. Health Inform. 2026, §6.2.2)
+#
+# This is the PulseDB "full" variant of mdvisco_refinement: patient-information
+# (PI) mode is ON. It adds a DistilBERT text_encoder_pipeline and sets pi=true on
+# every vital encoder so that demographic text embeddings (age/gender/height/
+# weight/bmi) are fused with the waveform embeddings for BP prediction.
+#
+# Difference vs. mdvisco_refinement (UCI default):
+#   - text_encoder_pipeline: TextEncoderPipeline  (was null)
+#   - vital_encoders.{ppg,ecg}.pi: true           (was false)
+# Note: BPModel derives pi from `text_encoder_pipeline is not None`; the per-encoder
+#       pi flags are set to match so no override warning is emitted.
+#
+# Requirements:
+#   - Use with PulseDB (input_size=1280) and refinement_trainer_mdvisco, which already
+#     wires the demographics_text_encoder preprocessor + age/gender/... include fields.
+#   - DistilBERT (distilbert-base-uncased, ~250MB) is downloaded on first run.
+#
+# Usage:
+#   torchrun --module src.train -m model@model=mdvisco_refinement_pulsedb \
+#     trainer=refinement_trainer_mdvisco \
+#     train_dataset=train_pulsedb_refinement_bp test_dataset=test_pulsedb_refinement_bp
+# ============================================================================
+
+defaults:
+  - base_bp_model
+  - /checkpoint_io@checkpoint_io: checkpoint_io
+  - _self_
+
+input_length: ${oc.select:train_dataset.input_size,${test_dataset.input_size}}
+
+# PI ON: DistilBERT text pipeline projects 768 -> 512 to match VitalEncoder projection_dim
+text_encoder_pipeline:
+  _target_: src.model.mdvisco.TextEncoderPipeline
+  text_embedding: 768
+  projection_dim: 512
+  dropout: 0.1
+
+vital_encoders:
+  ppg:
+    _target_: src.model.mdvisco.VitalEncoder
+    vital: ppg
+    input_length: ${oc.select:train_dataset.input_size,${test_dataset.input_size}}
+    projection_dim: 512
+    dropout: 0.1
+    d_model: 64
+    pi: true
+    num_input_channels: 1
+    num_layers: 15
+    expansion_factor: 5
+    patch_length: 4
+    patch_stride: 4
+
+  ecg:
+    _target_: src.model.mdvisco.VitalEncoder
+    vital: ecg
+    input_length: ${oc.select:train_dataset.input_size,${test_dataset.input_size}}
+    projection_dim: 512
+    dropout: 0.1
+    d_model: 64
+    pi: true
+    num_input_channels: 1
+    num_layers: 15
+    expansion_factor: 5
+    patch_length: 4
+    patch_stride: 4
