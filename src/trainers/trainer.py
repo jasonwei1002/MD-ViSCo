@@ -1646,12 +1646,13 @@ class BaseTrainer(ABC):
         )
         return sampler
 
-    @abstractmethod
     def on_checkpoint_loaded(self, checkpoint: dict[str, Any]) -> None:
         """Handle checkpoint loaded event.
 
-        Subclasses can override this to implement custom post-load logic
-        (e.g., logging, additional state restoration).
+        Optional hook (default: no-op). Subclasses may override this to
+        implement custom post-load logic (e.g., logging, additional state
+        restoration). It is intentionally NOT abstract: no trainer implements
+        it, and the docstring contract is "subclasses *can* override".
         """
 
     def to_device(self, obj: Any) -> Any:
