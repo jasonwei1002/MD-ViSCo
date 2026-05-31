@@ -530,6 +530,13 @@ class BaseDataset(Dataset, ABC):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        # Fallback: when no VitalsDataset is configured, derive the vital->channel
+        # mapping from input_preprocessing. The direction-capability check only
+        # tests vital membership (supports_directions), so channel indices are
+        # assigned by enumeration and are never used for tensor slicing.
+        if self._vitals_dataset is None:
+            self._vitals_dataset = self._derive_vitals_dataset()
+
         if self.input_size is None:
             raise ValueError("input_size must be provided to BaseDataset")
 
@@ -571,6 +578,33 @@ class BaseDataset(Dataset, ABC):
     def vitals_dataset(self, value):
         """Setter used to propagate capability descriptors to wrapped datasets."""
         self._vitals_dataset = value
+
+    def _derive_vitals_dataset(self) -> "VitalsDataset | None":
+        """Derive a VitalsDataset channel map from ``input_preprocessing``.
+
+        Fallback used when no ``vitals_dataset`` is explicitly configured. Collects
+        the union of source and target vitals declared in ``input_preprocessing``
+        and assigns each a unique channel index. Only membership is consumed
+        downstream (direction-capability checks via ``supports_directions``), so the
+        indices are arbitrary but unique.
+
+        Returns:
+            A VitalsDataset if ``input_preprocessing`` declares any vitals, else None.
+        """
+        ip = getattr(self, "input_preprocessing", None)
+        if not ip:
+            return None
+        names: list[str] = []
+        for section in ("source", "target"):
+            entries = ip.get(section) if hasattr(ip, "get") else None
+            for entry in entries or []:
+                vital = entry.get("vital") if hasattr(entry, "get") else None
+                if vital and vital not in names:
+                    names.append(vital)
+        if not names:
+            return None
+        channels = {name: idx for idx, name in enumerate(names)}
+        return VitalsDataset(channels)
 
     @classmethod
     def load_shared_data(cls, sample_file, extract_fn):
