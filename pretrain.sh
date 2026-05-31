@@ -9,6 +9,10 @@ set -euo pipefail
 #   - MULTI-SOURCE direction [PPG,ECG]->BP (both signals in at once; direction_mode=single)
 #   - is_pretraining=true + is_finetuning=false  => "pretraining" scenario
 #   - use_wcl=true                                => weighted contrastive loss ON
+#   - LR 2.5e-4 + early_stopping.patience=10      => LR linearly scaled to BS 512
+#       (paper: LR 1e-3 @ BS 2048; keeping 1e-3 at BS 512 diverged ~epoch 2 — train
+#        MAE spiked to ~81 mmHg, best val was epoch 1, ES killed it at epoch 6.
+#        Higher ES patience lets ReduceLROnPlateau drop LR before stopping.)
 #   - use_amp(bf16) + gradient_checkpointing      => memory savings, near-lossless
 #       (bf16 covers the PatchTSMixer waveform branch; checkpointing only the
 #        DistilBERT text branch — PatchTSMixer lacks HF checkpointing support.)
@@ -30,7 +34,9 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.is_pretraining=true \
     trainer.is_finetuning=false \
     trainer.use_wcl=true \
-    trainer.batch_size=1024 \
+    trainer.batch_size=512 \
+    trainer.learning_rate=2.5e-4 \
+    trainer.early_stopping.patience=10 \
     trainer.use_amp=true \
     trainer.amp_dtype=bfloat16 \
     trainer.use_gradient_checkpointing=true \

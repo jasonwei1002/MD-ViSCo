@@ -44,7 +44,9 @@ fi
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_wcl=true \
-    trainer.batch_size=1024 \
+    trainer.batch_size=512 \
+    trainer.learning_rate=2.5e-4 \
+    trainer.early_stopping.patience=10 \
     trainer.use_amp=true \
     trainer.amp_dtype=bfloat16 \
     trainer.use_gradient_checkpointing=true \
