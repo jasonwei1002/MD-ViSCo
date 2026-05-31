@@ -1,0 +1,37 @@
+# ============================================================================
+# PPG->BP and ECG->BP (two single-source directions) — paper-faithful refinement
+# ============================================================================
+#
+# Purpose:
+#   The paper's *headline* BP refinement (§III.D): jointly train TWO single-source
+#   branches PPG->BP and ECG->BP simultaneously (L_MAE summed over i in {ECG,PPG}),
+#   with single-modality inference. This is the BP analog of `ppg2abp_ecg2abp.yaml`.
+#
+# Contrast with `ppg2bp_ecg2bp.yaml`:
+#   - `ppg2bp_ecg2bp.yaml`      = ONE multi-source direction [PPG,ECG]->BP
+#     (both inputs required + predictions aggregated) => paper's MULTI-INPUT
+#     ablation (Appendix E / Table XIII), direction_mode=single.
+#   - THIS file (`_dual`)       = TWO single-source directions => direction_mode=multi,
+#     matching the AAMI/BHS headline setup.
+#
+# Inherits:
+#   - base_directions
+#
+# Notes:
+#   - Two directions => trainer auto-resolves direction_mode=multi.
+#   - BPModel still builds a per-vital encoder; with two single-source directions each
+#     branch is supervised on its own modality (see paper Eq. for L_MAE).
+#
+# ============================================================================
+
+defaults:
+  - base_directions
+  - _self_
+
+active_directions:
+  - _target_: src.core.domain.Direction
+    source: [PPG]
+    target: BP
+  - _target_: src.core.domain.Direction
+    source: [ECG]
+    target: BP

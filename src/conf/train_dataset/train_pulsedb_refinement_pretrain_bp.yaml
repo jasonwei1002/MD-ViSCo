@@ -1,0 +1,53 @@
+# ============================================================================
+# PulseDB Refinement PRETRAIN Dataset (Train_Subset, scalar BP) — paper §III.E
+# ============================================================================
+#
+# Purpose:
+#   Refinement-model self-supervised contrastive PRETRAIN split on the PulseDB
+#   *original train/val* partition = Train_Subset (paper Table II: 80/20,
+#   721,728 / 180,432 samples). Pairs with the finetune config
+#   `train_pulsedb_refinement_bp` (CalFree_Test_Subset, 81/9/10).
+#
+# Inherits:
+#   - base_pulsedb
+#
+# Notes:
+#   - Identical preprocessing/targets to `train_pulsedb_refinement_bp`, but points at
+#     `Train_Subset.h5` and uses an 80/20 (no-test) split for the "pretraining" scenario.
+#   - Requires the trainer to run with `is_pretraining=true is_finetuning=false`
+#     (see `_determine_training_scenario`: is_finetuning is checked FIRST, so the
+#     trainer's default `is_finetuning: true` MUST be overridden to false here).
+#   - `include: [bp_raw, age_raw, gender_raw, ...]` is what feeds WCL (`use_wcl=true`).
+#
+# ============================================================================
+
+defaults:
+  - base_pulsedb
+  - _self_
+
+# Target: BP scalar only (same as train_pulsedb_refinement_bp)
+input_preprocessing:
+  source:
+    - vital: "ecg"
+      norm: "minmax_zc"
+    - vital: "ppg"
+      norm: "minmax_zc"
+    - vital: "abp"
+      norm: "minmax_zc"
+  target:
+    - vital: "bp"
+      norm: "global_minmax"
+  include:
+    - bp_raw
+    - age_raw
+    - gender_raw
+    - height_raw
+    - weight_raw
+    - bmi_raw
+
+dataset_path: ???
+file_name: "Train_Subset.h5"
+# "pretraining" scenario: train + val must sum to 1.0 (no held-out test split)
+train_ratio: 0.80
+val_ratio: 0.20
+test_ratio: 0.0

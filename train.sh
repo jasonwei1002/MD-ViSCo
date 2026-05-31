@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- Prereqs ---
-# conda activate mdvisco
+# ============================================================================
+# MD-ViSCo stage-2 BP refinement — FULL paper recipe (pretrain -> finetune)
+# ============================================================================
+# Convenience orchestrator: runs pretrain.sh then finetune.sh. The finetune step
+# warm-starts from the pretrain checkpoint (pretrain.sh writes its path to
+# ./weights/.last_pretrain_ckpt, finetune.sh reads it).
+#
+# Run the two stages independently if you prefer:
+#   bash pretrain.sh
+#   bash finetune.sh [/path/to/checkpoint_S_42.pt]
+#
+# See CLAUDE.md "Paper-faithful BP refinement recipe" for details.
+# --- Prereqs:  conda activate mdvisco   (run from repo root)
+# ============================================================================
 
-DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
+HERE="$(cd "$(dirname "$0")" && pwd)"
 
-torchrun --standalone --nproc_per_node=1 --module src.train -m \
-    trainer=refinement_trainer_mdvisco_pulsedb \
-    trainer.use_patient_information=true \
-    trainer.overwrite_checkpoint=true \
-    train_dataset=train_pulsedb_refinement_bp \
-    test_dataset=test_pulsedb_refinement_bp \
-    train_dataset.dataset_path="$DATA" \
-    test_dataset.dataset_path="$DATA" \
-    trainer.progress_bar.wandb_wrapper.project_name=mdvisco-refinement \
-    trainer.progress_bar.wandb_wrapper.entity=jasonwei
+bash "${HERE}/pretrain.sh"
+bash "${HERE}/finetune.sh"

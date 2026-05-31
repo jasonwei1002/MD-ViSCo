@@ -231,6 +231,11 @@ class TrainerBaseConfig:
     load_model_weights: bool = False
     load_optimizer: bool = True
     load_scheduler: bool = True
+    # Warm-start: explicit path to a checkpoint file to load ONLY model weights
+    # from (bypasses checkpoint_mapping path reconstruction). Used for the paper's
+    # pretrain -> finetune handoff. None = no warm-start. Does NOT restore
+    # optimizer/scheduler/early-stopping state (that is resume_training's job).
+    load_weights_from: str | None = None
 
     # Checkpoint path parameters (for CheckpointManager)
     # abs_path moved to CheckpointManagerConfig.base_dir
@@ -429,6 +434,7 @@ class BaseTrainer(ABC):
         resume_training: bool = False,
         strict_loading: bool = True,
         load_model_weights: bool = False,
+        load_weights_from: str | None = None,
         load_optimizer: bool = True,
         load_scheduler: bool = True,
         load_early_stopping: bool = True,
@@ -572,6 +578,7 @@ class BaseTrainer(ABC):
         self.use_wcl = use_wcl
         self.strict_loading = strict_loading
         self.load_model_weights = load_model_weights
+        self.load_weights_from = load_weights_from
         self.load_optimizer = load_optimizer
         self.load_scheduler = load_scheduler
         self.load_early_stopping = load_early_stopping
@@ -3036,7 +3043,28 @@ class BaseTrainer(ABC):
             # TIMING: Load checkpoint and prepare model weights BEFORE DDP wrapping
             # (rank 0 only)
             checkpoint_loaded = False
-            if self.resume_training or self.load_model_weights:
+            if self.load_weights_from:
+                # Warm-start: load ONLY model weights from an explicit checkpoint
+                # file (bypasses checkpoint_mapping path reconstruction). Used for
+                # the paper's pretrain -> finetune handoff. Rank 0 loads + applies
+                # before DDP wrap; DDP broadcasts to other ranks. Optimizer/scheduler
+                # state is intentionally NOT restored (fresh finetune, not resume).
+                if self.is_rank0:
+                    if not os.path.exists(self.load_weights_from):
+                        raise ValueError(
+                            "load_weights_from: checkpoint not found at "
+                            f"{self.load_weights_from}"
+                        )
+                    logger.info(
+                        f"Warm-start: loading model weights from {self.load_weights_from}"
+                    )
+                    self._stored_checkpoint = {
+                        "model": self.checkpoint_io.load(
+                            self.load_weights_from, map_location="cpu"
+                        )
+                    }
+                self.prepare_model_weights(models={"model": self.model})
+            elif self.resume_training or self.load_model_weights:
                 logger.info("Resuming training from checkpoint...")
                 # Load from disk and broadcast status so all ranks know resume state
                 checkpoint_loaded = self.load_checkpoint_unified(train_loader)
