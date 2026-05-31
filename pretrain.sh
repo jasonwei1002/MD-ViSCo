@@ -9,6 +9,9 @@ set -euo pipefail
 #   - MULTI-SOURCE direction [PPG,ECG]->BP (both signals in at once; direction_mode=single)
 #   - is_pretraining=true + is_finetuning=false  => "pretraining" scenario
 #   - use_wcl=true                                => weighted contrastive loss ON
+#   - use_amp(bf16) + gradient_checkpointing      => memory savings, near-lossless
+#       (bf16 covers the PatchTSMixer waveform branch; checkpointing only the
+#        DistilBERT text branch — PatchTSMixer lacks HF checkpointing support.)
 # (For the single-source-joint variant instead, swap the trainer to
 #  refinement_trainer_mdvisco_pulsedb_dual — see CLAUDE.md.)
 #
@@ -28,6 +31,9 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.is_finetuning=false \
     trainer.use_wcl=true \
     trainer.batch_size=1024 \
+    trainer.use_amp=true \
+    trainer.amp_dtype=bfloat16 \
+    trainer.use_gradient_checkpointing=true \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
     train_dataset=train_pulsedb_refinement_pretrain_bp \

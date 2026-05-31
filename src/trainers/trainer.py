@@ -36,6 +36,7 @@ Implements the canonical PyTorch checkpoint loading pattern for production DDP t
 
 from __future__ import annotations
 
+import contextlib
 import datetime
 import logging
 import math
@@ -225,6 +226,17 @@ class TrainerBaseConfig:
     is_few_shot: bool = False
     resume_training: bool = False
     use_wcl: bool = False
+
+    # Memory / precision optimization (lossless or near-lossless; CUDA-only,
+    # no-op on CPU). Defaults keep upstream behavior unchanged.
+    # AMP: autocast forward+loss. bf16 needs no GradScaler and is near-lossless;
+    # fp16 enables a GradScaler automatically.
+    use_amp: bool = False
+    amp_dtype: str = "bfloat16"  # "bfloat16" | "float16"
+    # Gradient (activation) checkpointing: recompute activations in backward to
+    # save memory. Mathematically lossless; ~20-30% slower. Enabled on HF
+    # submodules (PatchTSMixer/DistilBERT) via gradient_checkpointing_enable.
+    use_gradient_checkpointing: bool = False
 
     # Checkpoint config parameters
     strict_loading: bool = True
@@ -444,6 +456,9 @@ class BaseTrainer(ABC):
         scheduler_patience: int = 10,
         use_patient_split: bool = False,
         use_wcl: bool = False,
+        use_amp: bool = False,
+        amp_dtype: str = "bfloat16",
+        use_gradient_checkpointing: bool = False,
         num_threads: int = 0,
         num_workers: int = 0,
         pin_memory: bool = True,
@@ -576,6 +591,26 @@ class BaseTrainer(ABC):
         self.is_few_shot = is_few_shot
         self.resume_training = resume_training
         self.use_wcl = use_wcl
+        # --- AMP / gradient checkpointing (memory optimization) ---
+        self.use_amp = use_amp
+        self.amp_dtype = amp_dtype
+        self.use_gradient_checkpointing = use_gradient_checkpointing
+        # bf16 needs no loss scaling; fp16 does. Resolve dtype + build the scaler
+        # (disabled unless fp16+CUDA, so bf16/off take the plain backward path).
+        self._amp_torch_dtype = (
+            torch.bfloat16
+            if str(amp_dtype).lower() in ("bfloat16", "bf16")
+            else torch.float16
+        )
+        _amp_needs_scaler = (
+            use_amp
+            and self._amp_torch_dtype == torch.float16
+            and torch.cuda.is_available()
+        )
+        try:
+            self.amp_scaler = torch.amp.GradScaler("cuda", enabled=_amp_needs_scaler)
+        except (AttributeError, TypeError):
+            self.amp_scaler = torch.cuda.amp.GradScaler(enabled=_amp_needs_scaler)
         self.strict_loading = strict_loading
         self.load_model_weights = load_model_weights
         self.load_weights_from = load_weights_from
@@ -2702,6 +2737,44 @@ class BaseTrainer(ABC):
         if unique_subjects:
             logger.info(f"Unique subjects: {unique_subjects}")
 
+    def _enable_gradient_checkpointing(self) -> None:
+        """Enable gradient (activation) checkpointing on every HuggingFace
+        submodule that supports it (e.g. PatchTSMixerModel, DistilBertModel).
+
+        Mathematically lossless (activations are recomputed in the backward
+        pass); trades ~20-30% compute for a large activation-memory reduction.
+        ``use_reentrant=False`` is required to stay compatible with DDP's
+        ``find_unused_parameters=True``.
+        """
+        enabled = 0
+        for module in self.model.modules():
+            enable_fn = getattr(module, "gradient_checkpointing_enable", None)
+            if not callable(enable_fn):
+                continue
+            try:
+                enable_fn(gradient_checkpointing_kwargs={"use_reentrant": False})
+                enabled += 1
+            except TypeError:
+                # Older transformers without the kwargs argument.
+                enable_fn()
+                enabled += 1
+            except ValueError as exc:
+                # Module reports it does not support gradient checkpointing.
+                logger.warning(
+                    f"{type(module).__name__} does not support gradient "
+                    f"checkpointing: {exc}"
+                )
+        if enabled:
+            logger.info(
+                f"Gradient checkpointing enabled on {enabled} HF submodule(s) "
+                "(use_reentrant=False)"
+            )
+        else:
+            logger.warning(
+                "use_gradient_checkpointing=True but no HF submodule exposing "
+                "gradient_checkpointing_enable was found; nothing changed."
+            )
+
     def _setup_ddp_wrapping(self, model: nn.Module, local_rank: int) -> None:
         """Set up DDP wrapping - can be overridden by subclasses for special
         handling."""
@@ -2806,6 +2879,9 @@ class BaseTrainer(ABC):
             model.eval()
             context_manager = torch.no_grad()
 
+        # AMP autocast (forward + loss only). bf16/fp16 on CUDA; no-op otherwise.
+        amp_enabled = self.use_amp and getattr(device, "type", None) == "cuda"
+
         try:
             with context_manager:
                 for step, batch in enumerate(data_loader):
@@ -2817,18 +2893,32 @@ class BaseTrainer(ABC):
                     }
 
                     # Use prepared_batch with unified structure
-                    loss, metrics, outputs = self._step_core(
-                        model, prepared_batch, stage=stage
+                    amp_cm = (
+                        torch.autocast(device_type="cuda", dtype=self._amp_torch_dtype)
+                        if amp_enabled
+                        else contextlib.nullcontext()
                     )
+                    with amp_cm:
+                        loss, metrics, outputs = self._step_core(
+                            model, prepared_batch, stage=stage
+                        )
 
                     # Stage-specific operations
                     if stage == STAGE_TRAIN:
                         # Training side effects
                         if optim is not None:
                             optim.zero_grad(set_to_none=True)
-                        loss.backward()
-                        if optim is not None:
-                            optim.step()
+                        # fp16 AMP routes through the GradScaler; bf16/off use the
+                        # plain backward path (scaler is disabled there).
+                        if self.amp_scaler.is_enabled():
+                            self.amp_scaler.scale(loss).backward()
+                            if optim is not None:
+                                self.amp_scaler.step(optim)
+                                self.amp_scaler.update()
+                        else:
+                            loss.backward()
+                            if optim is not None:
+                                optim.step()
 
                     # Use unified metrics logging (every rank)
                     with self.metrics.aggregate(stage):
@@ -3031,6 +3121,11 @@ class BaseTrainer(ABC):
                 dataset_tuple
             )
             self._move_model_to_device(train_loader=train_loader)
+
+            # Enable gradient (activation) checkpointing on HF submodules BEFORE
+            # DDP wrap (lossless memory saving; ~20-30% slower).
+            if self.use_gradient_checkpointing:
+                self._enable_gradient_checkpointing()
 
             # === Print model parameters (rank 0 only to avoid duplicate output) ===
             if self.is_rank0:

@@ -8,6 +8,7 @@ set -euo pipefail
 # initializing the model from the Step-1 pretrain checkpoint via
 # `trainer.load_weights_from` (loads ONLY model weights; optimizer/scheduler
 # start fresh). Same MULTI-SOURCE direction [PPG,ECG]->BP + WCL as pretrain.
+# Same memory flags as pretrain: use_amp(bf16) + gradient_checkpointing.
 # (Single-source-joint variant: swap trainer to *_pulsedb_dual — see CLAUDE.md.)
 #
 # Usage:
@@ -44,6 +45,9 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_wcl=true \
     trainer.batch_size=1024 \
+    trainer.use_amp=true \
+    trainer.amp_dtype=bfloat16 \
+    trainer.use_gradient_checkpointing=true \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
     "${WARMSTART_OVERRIDE[@]}" \
