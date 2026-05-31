@@ -51,6 +51,7 @@ class MSELoss(BaseCriterion):
         device: torch.device | None = None,
         name: str = "mse_loss",
         log_loss: bool = False,
+        **kwargs,
     ):
         """Initialize MSE Loss.
 
@@ -59,9 +60,11 @@ class MSELoss(BaseCriterion):
             device: Device to compute the loss on.
             name: Name for logging purposes.
             log_loss: Whether to log loss values.
+            **kwargs: Extra config fields (e.g. ``enabled``) forwarded to
+                BaseCriterion; stored on ``self.config``.
         """
         super().__init__(
-            reduction=reduction, device=device, name=name, log_loss=log_loss
+            reduction=reduction, device=device, name=name, log_loss=log_loss, **kwargs
         )
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
