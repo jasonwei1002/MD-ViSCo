@@ -24,6 +24,40 @@ except ImportError:
     wandb = None
     logging.warning("wandb not found, pip install wandb")
 
+try:
+    import swanlab
+except ImportError:
+    swanlab = None
+    logging.warning("swanlab not found, pip install swanlab")
+
+# Set once per process: redirect wandb -> SwanLab so the existing wandb.* calls
+# in this wrapper are mirrored to SwanLab.
+_swanlab_synced = False
+
+
+def _enable_swanlab_sync() -> None:
+    """Redirect wandb logging to SwanLab (idempotent).
+
+    Calls ``swanlab.sync_wandb(wandb_run=False)`` so the existing
+    ``wandb.init/log/finish/watch`` calls are mirrored to SwanLab and are NOT
+    uploaded to the wandb cloud (wandb runs offline). Must be called before
+    ``wandb.init``. No-op if SwanLab is unavailable or already enabled.
+
+    The SwanLab mode honours the ``SWANLAB_MODE`` env var ("cloud" default; use
+    "local" for offline-only, "disabled" to turn SwanLab off). Cloud mode needs
+    a prior ``swanlab login`` or the ``SWANLAB_API_KEY`` env var.
+    """
+    global _swanlab_synced
+    if swanlab is None or _swanlab_synced:
+        return
+    try:
+        mode = os.environ.get("SWANLAB_MODE", "cloud")
+        swanlab.sync_wandb(mode=mode, wandb_run=False)
+        _swanlab_synced = True
+        logger.info("SwanLab sync enabled (wandb -> SwanLab, mode=%s)", mode)
+    except Exception:
+        logger.exception("Failed to enable SwanLab sync; continuing without it")
+
 
 @dataclass
 class WandBWrapperConfig:
@@ -116,6 +150,10 @@ class WandBWrapper:
             from src.utils.validation_utils import flatten_config
 
             wandb_config = flatten_config(config)
+
+            # Mirror wandb -> SwanLab before init; wandb runs offline (no cloud
+            # upload), all metrics/config go to SwanLab. See _enable_swanlab_sync.
+            _enable_swanlab_sync()
 
             wandb.init(
                 entity=self.entity,
