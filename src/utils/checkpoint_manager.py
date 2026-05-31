@@ -140,8 +140,8 @@ class CheckpointManager:
 
         Args:
             key: Optional checkpoint key (e.g., 'save', 'load', 'stage1', 'stage2')
-            epoch: Epoch number. If ``None``, results in a suffix-free filename
-                (used for best-checkpoint loading). If an integer, includes
+            epoch: Epoch number. If ``None``, results in a ``_best`` suffix
+                (the best-checkpoint slot). If an integer, includes
                 ``_epoch_{epoch}`` suffix.
             direction: Direction for multi-directional training
             seed: Seed for reproducibility
@@ -193,8 +193,8 @@ class CheckpointManager:
         Args:
             key: Optional checkpoint key. If 'save', uses glob search.
                 Otherwise, uses direct path check.
-            epoch: Epoch number. If ``None``, results in a suffix-free filename
-                (used for best-checkpoint loading). If an integer, includes
+            epoch: Epoch number. If ``None``, results in a ``_best`` suffix
+                (the best-checkpoint slot). If an integer, includes
                 ``_epoch_{epoch}`` suffix.
             direction: Direction for multi-directional training
             seed: Seed for reproducibility
@@ -217,7 +217,7 @@ class CheckpointManager:
                     format_params["direction"] += (
                         "_" if format_params["direction"] != "" else ""
                     )
-                epoch_suffix = f"_epoch_{epoch}" if epoch is not None else ""
+                epoch_suffix = f"_epoch_{epoch}" if epoch is not None else "_best"
                 format_params["epoch_suffix"] = epoch_suffix
                 format_params["file_ext"] = params["file_ext"]
                 filename_pattern = self.filename_format.format(**format_params)
@@ -343,7 +343,7 @@ class CheckpointManager:
         if params.get("direction") is not None:
             format_params["direction"] += "_" if params["direction"] != "" else ""
 
-        epoch_suffix = ""
+        epoch_suffix = "_best"
         if params.get("epoch") is not None:
             epoch_suffix = f"_epoch_{params['epoch']}"
 

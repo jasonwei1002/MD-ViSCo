@@ -42,6 +42,7 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.use_gradient_checkpointing=true \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
+    trainer.save_checkpoint_frequency=null \
     train_dataset=train_pulsedb_refinement_pretrain_bp \
     test_dataset=test_pulsedb_refinement_bp \
     train_dataset.dataset_path="$DATA" \
@@ -50,9 +51,10 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.progress_bar.wandb_wrapper.entity="$WANDB_ENTITY"
 
 # Discover the pretrain checkpoint (pretrain dir ends in _BP_NORM, NOT _finetuning).
-# Leading wildcard catches the direction prefix: multi-source => PPG+ECG2BP_checkpoint_S_*.pt,
-# single-source-joint (_dual) => checkpoint_S_*.pt.
-CKPT=$(ls -t ./weights/MDViSCoRef/PulseDB/*_BP_NORM/*checkpoint_S_*.pt 2>/dev/null \
+# Best-model file ends in _best.pt (periodic saving is off); leading wildcard catches
+# the direction prefix: multi-source => PPG+ECG2BP_checkpoint_S_*_best.pt,
+# single-source-joint (_dual) => checkpoint_S_*_best.pt.
+CKPT=$(ls -t ./weights/MDViSCoRef/PulseDB/*_BP_NORM/*checkpoint_S_*_best.pt 2>/dev/null \
          | grep -v _finetuning | head -1 || true)
 if [[ -n "${CKPT}" ]]; then
     echo "${CKPT}" > ./weights/.last_pretrain_ckpt

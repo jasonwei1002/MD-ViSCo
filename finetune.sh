@@ -52,6 +52,7 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.use_gradient_checkpointing=true \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
+    trainer.save_checkpoint_frequency=null \
     "${WARMSTART_OVERRIDE[@]}" \
     train_dataset=train_pulsedb_refinement_bp \
     test_dataset=test_pulsedb_refinement_bp \
