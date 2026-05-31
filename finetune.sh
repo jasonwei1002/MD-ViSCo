@@ -7,7 +7,8 @@ set -euo pipefail
 # Finetunes on the PulseDB held-out test patients (CalFree_Test_Subset, 81/9/10),
 # initializing the model from the Step-1 pretrain checkpoint via
 # `trainer.load_weights_from` (loads ONLY model weights; optimizer/scheduler
-# start fresh). Same two single-source directions + WCL as pretrain.
+# start fresh). Same MULTI-SOURCE direction [PPG,ECG]->BP + WCL as pretrain.
+# (Single-source-joint variant: swap trainer to *_pulsedb_dual — see CLAUDE.md.)
 #
 # Usage:
 #   bash finetune.sh                       # uses ./weights/.last_pretrain_ckpt
@@ -40,7 +41,7 @@ else
 fi
 
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
-    trainer=refinement_trainer_mdvisco_pulsedb_dual \
+    trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_wcl=true \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \

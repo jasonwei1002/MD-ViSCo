@@ -153,12 +153,15 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
 - DistilBERT (`distilbert-base-uncased`) loads via `from_pretrained` **without** `from_tf=True`, so a PyTorch/safetensors weight cache is required (a TF-only cache raises `OSError`).
 - Pre-flight on any new env: `python -m src.train --cfg job --resolve <same overrides>` composes only (no GPU/data) and surfaces missing fields / wiring.
 
-### Paper-faithful BP refinement recipe (added configs — pretrain → finetune)
+### BP refinement recipe — pretrain → finetune (two-step)
 
-To reproduce the paper's **headline** BP refinement (§III.D + Table II: two single-source branches, WCL, pretrain-on-Train_Subset → finetune-on-CalFree) rather than the multi-input ablation that the stock `ppg2bp_ecg2bp` trains, three configs were **added** here:
+The `pretrain.sh`/`finetune.sh` scripts default to the **multi-source** direction `ppg2bp_ecg2bp` (`[PPG,ECG]→BP`, both signals in at once, predictions aggregated; `direction_mode=single` since it is one direction). This is the paper's **Appendix-E multi-input** setting — best MAE *when both signals are present at inference*, but it cannot run single-modality. Trainer: the **stock** `refinement_trainer_mdvisco_pulsedb`.
 
+To instead reproduce the paper's **headline** single-source result (§III.D + Table II: two single-source branches `PPG→BP`/`ECG→BP` jointly trained, single-modality inference, the AAMI/BHS numbers), swap the trainer to `refinement_trainer_mdvisco_pulsedb_dual` (added). Pick the variant by deployment: multi-source if PPG **and** ECG are always co-present; `_dual` if any single signal must work.
+
+Added configs:
 - `src/conf/directions/ppg2bp_ecg2bp_dual.yaml` — **two** single-source directions (`[PPG]→BP`, `[ECG]→BP`) ⇒ `direction_mode=multi` (the BP analog of `ppg2abp_ecg2abp`).
-- `src/conf/train_dataset/train_pulsedb_refinement_pretrain_bp.yaml` — refinement **pretrain** split: `file_name: Train_Subset.h5`, **80/20**, `test_ratio: 0.0` (the "pretraining" scenario). Same preprocessing/targets as `train_pulsedb_refinement_bp`.
+- `src/conf/train_dataset/train_pulsedb_refinement_pretrain_bp.yaml` — refinement **pretrain** split: `file_name: Train_Subset.h5`, **80/20**, `test_ratio: 0.0` (the "pretraining" scenario). Same preprocessing/targets as `train_pulsedb_refinement_bp`. Used by **both** variants.
 - `src/conf/trainer/refinement_trainer_mdvisco_pulsedb_dual.yaml` — clone of `refinement_trainer_mdvisco_pulsedb` but `override /directions@directions: ppg2bp_ecg2bp_dual` and **`direction_mode: multi`** (without the latter, `train.py::validate_config` raises "direction_mode is 'single', but multiple directions are provided").
 
 Recipe flags (both steps add `trainer.use_wcl=true` to turn WCL on — default is `False`, which only labels the ckpt `_WCL_False` and withholds the `bp_raw/age_raw/gender_raw` fields WCL needs):
@@ -168,7 +171,7 @@ Recipe flags (both steps add `trainer.use_wcl=true` to turn WCL on — default i
 
 **Warm-start handoff — `trainer.load_weights_from` (added field, see "Local modifications").** The stock trainer can only *resume* from its own save path (default `checkpoint_mapping` maps every component to the `"save"` manager, and `_load_checkpoint_from_disk` raises if a component's file is missing — so `load_model_weights=true` on a fresh finetune dir crashes). Cross-run warm-start is therefore done with the **added** `load_weights_from` field: give it an explicit checkpoint *file* path and it loads **only** the model weights (reusing `prepare_model_weights`/`load_from_checkpoint_dict`, rank-0 + DDP broadcast), without touching optimizer/scheduler/early-stopping state or the save path. Pretrain & finetune share the same architecture/directions, so `load_state_dict(strict=True)` matches.
 
-**Three scripts** (run from repo root): `pretrain.sh` (Step 1, writes the produced checkpoint path to `./weights/.last_pretrain_ckpt`), `finetune.sh [ckpt]` (Step 2, warm-starts from `$1` or `.last_pretrain_ckpt`; `COLD_START=1` to skip), and `train.sh` (orchestrator: `pretrain.sh` then `finetune.sh`). Multi-direction ⇒ the checkpoint filename has no direction prefix (`checkpoint_S_42.pt`).
+**Three scripts** (run from repo root): `pretrain.sh` (Step 1, auto-discovers the produced checkpoint and writes its path to `./weights/.last_pretrain_ckpt`), `finetune.sh [ckpt]` (Step 2, warm-starts from `$1` or `.last_pretrain_ckpt`; `COLD_START=1` to skip), and `train.sh` (orchestrator: `pretrain.sh` then `finetune.sh`). Checkpoint filename embeds the direction: multi-source (default) ⇒ `PPG+ECG2BP_checkpoint_S_42.pt`; `_dual` (multi-direction) ⇒ no prefix (`checkpoint_S_42.pt`). `pretrain.sh`'s discovery glob `*checkpoint_S_*.pt` matches both.
 
 ### Local modifications to this snapshot (diverges from upstream)
 
