@@ -9,10 +9,11 @@ set -euo pipefail
 #   - MULTI-SOURCE direction [PPG,ECG]->BP (both signals in at once; direction_mode=single)
 #   - is_pretraining=true + is_finetuning=false  => "pretraining" scenario
 #   - use_wcl=true                                => weighted contrastive loss ON
-#   - LR 2.5e-4 + early_stopping.patience=10      => LR linearly scaled to BS 512
-#       (paper: LR 1e-3 @ BS 2048; keeping 1e-3 at BS 512 diverged ~epoch 2 — train
-#        MAE spiked to ~81 mmHg, best val was epoch 1, ES killed it at epoch 6.
-#        Higher ES patience lets ReduceLROnPlateau drop LR before stopping.)
+#   - optimizer.lr 2.5e-4 + scheduler.patience=3 + early_stopping.patience=10
+#       LR linearly scaled to BS 512 (paper: 1e-3 @ BS 2048; 1e-3 here diverged ~epoch 2).
+#       LIVE knobs are trainer.optimizer.lr / trainer.scheduler.patience, NOT
+#       trainer.learning_rate / trainer.scheduler_patience (those are checkpoint-path
+#       labels only — kept equal below for an honest path). See CLAUDE.md "labels vs live knobs".
 #   - use_amp(bf16) + gradient_checkpointing      => memory savings, near-lossless
 #       (bf16 covers the PatchTSMixer waveform branch; checkpointing only the
 #        DistilBERT text branch — PatchTSMixer lacks HF checkpointing support.)
@@ -27,6 +28,7 @@ set -euo pipefail
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
+LR=2.5e-4  # single source: drives both the live optimizer.lr and the learning_rate path label
 
 echo "=== Step 1/2: PRETRAIN on Train_Subset ==="
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
@@ -35,7 +37,9 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.is_finetuning=false \
     trainer.use_wcl=true \
     trainer.batch_size=512 \
-    trainer.learning_rate=2.5e-4 \
+    trainer.learning_rate="$LR" \
+    trainer.optimizer.lr="$LR" \
+    trainer.scheduler.patience=3 \
     trainer.early_stopping.patience=10 \
     trainer.use_amp=true \
     trainer.amp_dtype=bfloat16 \

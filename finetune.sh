@@ -21,6 +21,7 @@ set -euo pipefail
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
+LR=2.5e-4  # single source: drives both the live optimizer.lr and the learning_rate path label
 
 PRETRAIN_CKPT="${1:-$(cat ./weights/.last_pretrain_ckpt 2>/dev/null || true)}"
 
@@ -45,7 +46,9 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer=refinement_trainer_mdvisco_pulsedb \
     trainer.use_wcl=true \
     trainer.batch_size=512 \
-    trainer.learning_rate=2.5e-4 \
+    trainer.learning_rate="$LR" \
+    trainer.optimizer.lr="$LR" \
+    trainer.scheduler.patience=3 \
     trainer.early_stopping.patience=10 \
     trainer.use_amp=true \
     trainer.amp_dtype=bfloat16 \
