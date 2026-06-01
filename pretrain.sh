@@ -20,8 +20,8 @@ set -euo pipefail
 # (For the single-source-joint variant instead, swap the trainer to
 #  refinement_trainer_mdvisco_pulsedb_dual — see CLAUDE.md.)
 #
-# On success, writes the produced checkpoint path to ./weights/.last_pretrain_ckpt
-# so finetune.sh can warm-start from it automatically.
+# On success, prints the produced checkpoint path and the ready-to-run finetune
+# command — pass that path explicitly to finetune.sh (no file handoff).
 # --- Prereqs:  conda activate mdvisco   (run from repo root)
 # ============================================================================
 
@@ -43,7 +43,7 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
     trainer.early_stopping.patience=10 \
     trainer.use_amp=true \
     trainer.amp_dtype=bfloat16 \
-    trainer.use_gradient_checkpointing=true \
+    trainer.use_gradient_checkpointing=false \
     trainer.use_patient_information=true \
     trainer.overwrite_checkpoint=true \
     trainer.save_checkpoint_frequency=null \
@@ -61,9 +61,8 @@ torchrun --standalone --nproc_per_node=1 --module src.train -m \
 CKPT=$(ls -t ./weights/MDViSCoRef/PulseDB/*_BP_NORM/*checkpoint_S_*_best.pt 2>/dev/null \
          | grep -v _finetuning | head -1 || true)
 if [[ -n "${CKPT}" ]]; then
-    echo "${CKPT}" > ./weights/.last_pretrain_ckpt
     echo "=== Pretrain checkpoint: ${CKPT}"
-    echo "    (saved to ./weights/.last_pretrain_ckpt — finetune.sh will use it)"
+    echo "    Next: bash finetune.sh \"${CKPT}\""
 else
     echo "WARNING: could not locate the pretrain checkpoint under ./weights/MDViSCoRef/PulseDB/*_BP_NORM/" >&2
     echo "         pass the path explicitly to finetune.sh." >&2
