@@ -7,9 +7,10 @@ set -euo pipefail
 # Finetunes on the PulseDB held-out test patients (CalFree_Test_Subset, 81/9/10),
 # initializing the model from the Step-1 pretrain checkpoint via
 # `trainer.load_weights_from` (loads ONLY model weights; optimizer/scheduler
-# start fresh). Same MULTI-SOURCE direction [PPG,ECG]->BP + WCL as pretrain.
+# start fresh). Same SINGLE-SOURCE-JOINT directions (PPG->BP + ECG->BP,
+# direction_mode=multi) + WCL as pretrain.
 # Same memory flags as pretrain: use_amp(bf16) + gradient_checkpointing.
-# (Single-source-joint variant: swap trainer to *_pulsedb_dual — see CLAUDE.md.)
+# (Multi-source [PPG,ECG]->BP ablation: set TRAINER=refinement_trainer_mdvisco_pulsedb — see CLAUDE.md.)
 #
 # Usage (the pretrain checkpoint path is REQUIRED — no auto-discovery):
 #   bash finetune.sh /path/to/checkpoint_S_42_best.pt   # warm-start from this checkpoint
@@ -20,7 +21,11 @@ set -euo pipefail
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
-LR=2.5e-4  # single source: drives both the live optimizer.lr and the learning_rate path label
+# MUST match the trainer used in pretrain.sh — warm-start strict-loads the weights.
+# Single-source-joint (paper headline): refinement_trainer_mdvisco_pulsedb_dual
+# Multi-source ablation ([PPG,ECG]->BP):  refinement_trainer_mdvisco_pulsedb
+TRAINER=refinement_trainer_mdvisco_pulsedb_dual
+LR=2.5e-4  # drives both the live optimizer.lr and the learning_rate path label
 
 WARMSTART_OVERRIDE=()
 if [[ "${COLD_START:-0}" == "1" ]]; then
@@ -42,7 +47,7 @@ else
 fi
 
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
-    trainer=refinement_trainer_mdvisco_pulsedb \
+    trainer="$TRAINER" \
     trainer.use_wcl=true \
     trainer.batch_size=512 \
     trainer.learning_rate="$LR" \

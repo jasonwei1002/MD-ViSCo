@@ -6,7 +6,8 @@ set -euo pipefail
 # ============================================================================
 # Self-supervised + WCL pretraining of the refinement encoders on the PulseDB
 # original train/val partition (Train_Subset, 80/20, no test split).
-#   - MULTI-SOURCE direction [PPG,ECG]->BP (both signals in at once; direction_mode=single)
+#   - SINGLE-SOURCE-JOINT directions PPG->BP + ECG->BP (two single-source branches
+#       jointly trained, single-modality inference; direction_mode=multi) — paper §III.D headline
 #   - is_pretraining=true + is_finetuning=false  => "pretraining" scenario
 #   - use_wcl=true                                => weighted contrastive loss ON
 #   - optimizer.lr 2.5e-4 + scheduler.patience=3 + early_stopping.patience=10
@@ -17,8 +18,8 @@ set -euo pipefail
 #   - use_amp(bf16) + gradient_checkpointing      => memory savings, near-lossless
 #       (bf16 covers the PatchTSMixer waveform branch; checkpointing only the
 #        DistilBERT text branch — PatchTSMixer lacks HF checkpointing support.)
-# (For the single-source-joint variant instead, swap the trainer to
-#  refinement_trainer_mdvisco_pulsedb_dual — see CLAUDE.md.)
+# (To run the MULTI-SOURCE [PPG,ECG]->BP ablation instead, set
+#  TRAINER=refinement_trainer_mdvisco_pulsedb below — see CLAUDE.md.)
 #
 # On success, prints the produced checkpoint path and the ready-to-run finetune
 # command — pass that path explicitly to finetune.sh (no file handoff).
@@ -28,11 +29,14 @@ set -euo pipefail
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
-LR=2.5e-4  # single source: drives both the live optimizer.lr and the learning_rate path label
+# Single-source-joint (paper headline): refinement_trainer_mdvisco_pulsedb_dual
+# Multi-source ablation ([PPG,ECG]->BP):  refinement_trainer_mdvisco_pulsedb
+TRAINER=refinement_trainer_mdvisco_pulsedb_dual
+LR=2.5e-4  # drives both the live optimizer.lr and the learning_rate path label
 
-echo "=== Step 1/2: PRETRAIN on Train_Subset ==="
+echo "=== Step 1/2: PRETRAIN on Train_Subset (trainer=$TRAINER) ==="
 torchrun --standalone --nproc_per_node=1 --module src.train -m \
-    trainer=refinement_trainer_mdvisco_pulsedb \
+    trainer="$TRAINER" \
     trainer.is_pretraining=true \
     trainer.is_finetuning=false \
     trainer.use_wcl=true \
