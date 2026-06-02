@@ -7,10 +7,12 @@ set -euo pipefail
 # Finetunes on the PulseDB held-out test patients (CalFree_Test_Subset, 81/9/10),
 # initializing the model from the Step-1 pretrain checkpoint via
 # `trainer.load_weights_from` (loads ONLY model weights; optimizer/scheduler
-# start fresh). Same SINGLE-SOURCE-JOINT directions (PPG->BP + ECG->BP,
-# direction_mode=multi) + WCL as pretrain.
+# start fresh). Same directions (PPG->BP + ECG->BP, direction_mode=multi) + WCL as
+# pretrain. NOTE: for BPModel this trains the both-vitals-AVERAGED model (loss on the
+# mean of per-vital SBP/DBP), NOT independent single-source branches — see pretrain.sh.
 # Same memory flags as pretrain: use_amp(bf16) + gradient_checkpointing.
-# (Multi-source [PPG,ECG]->BP ablation: set TRAINER=refinement_trainer_mdvisco_pulsedb — see CLAUDE.md.)
+# (TRAINER=refinement_trainer_mdvisco_pulsedb = one multi-source direction; same averaged
+#  training for BPModel — differs only in direction metadata / eval.)
 #
 # Usage (the pretrain checkpoint path is REQUIRED — no auto-discovery):
 #   bash finetune.sh /path/to/checkpoint_S_42_best.pt   # warm-start from this checkpoint
@@ -22,8 +24,9 @@ DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
 # MUST match the trainer used in pretrain.sh — warm-start strict-loads the weights.
-# Single-source-joint (paper headline): refinement_trainer_mdvisco_pulsedb_dual
-# Multi-source ablation ([PPG,ECG]->BP):  refinement_trainer_mdvisco_pulsedb
+# Two directions PPG->BP + ECG->BP (direction_mode=multi):           refinement_trainer_mdvisco_pulsedb_dual
+# One multi-source direction [PPG,ECG]->BP (direction_mode=single):  refinement_trainer_mdvisco_pulsedb
+# NOTE: for BPModel both train the same both-vitals-AVERAGED model (see pretrain.sh).
 TRAINER=refinement_trainer_mdvisco_pulsedb_dual
 LR=2.5e-4  # drives both the live optimizer.lr and the learning_rate path label
 

@@ -6,8 +6,10 @@ set -euo pipefail
 # ============================================================================
 # Self-supervised + WCL pretraining of the refinement encoders on the PulseDB
 # original train/val partition (Train_Subset, 80/20, no test split).
-#   - SINGLE-SOURCE-JOINT directions PPG->BP + ECG->BP (two single-source branches
-#       jointly trained, single-modality inference; direction_mode=multi) — paper §III.D headline
+#   - directions PPG->BP + ECG->BP (direction_mode=multi). NOTE: for BPModel this
+#       only changes direction metadata + per-direction EVAL metrics; TRAINING still
+#       feeds both PPG+ECG every batch and AVERAGES their per-vital SBP/DBP (loss on the
+#       mean) — it is NOT the paper's per-modality-summed independent single-source branches.
 #   - is_pretraining=true + is_finetuning=false  => "pretraining" scenario
 #   - use_wcl=true                                => weighted contrastive loss ON
 #   - optimizer.lr 2.5e-4 + scheduler.patience=3 + early_stopping.patience=10
@@ -18,8 +20,9 @@ set -euo pipefail
 #   - use_amp(bf16) + gradient_checkpointing      => memory savings, near-lossless
 #       (bf16 covers the PatchTSMixer waveform branch; checkpointing only the
 #        DistilBERT text branch — PatchTSMixer lacks HF checkpointing support.)
-# (To run the MULTI-SOURCE [PPG,ECG]->BP ablation instead, set
-#  TRAINER=refinement_trainer_mdvisco_pulsedb below — see CLAUDE.md.)
+# (TRAINER=refinement_trainer_mdvisco_pulsedb selects ONE multi-source direction
+#  [PPG,ECG]->BP instead; for BPModel both TRAINERs train the same both-vitals-averaged
+#  model — they differ in direction metadata / eval, not the training forward.)
 #
 # On success, prints the produced checkpoint path and the ready-to-run finetune
 # command — pass that path explicitly to finetune.sh (no file handoff).
@@ -29,8 +32,10 @@ set -euo pipefail
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
-# Single-source-joint (paper headline): refinement_trainer_mdvisco_pulsedb_dual
-# Multi-source ablation ([PPG,ECG]->BP):  refinement_trainer_mdvisco_pulsedb
+# Two directions PPG->BP + ECG->BP (direction_mode=multi):           refinement_trainer_mdvisco_pulsedb_dual
+# One multi-source direction [PPG,ECG]->BP (direction_mode=single):  refinement_trainer_mdvisco_pulsedb
+# NOTE: for BPModel both train the same both-vitals-AVERAGED model (loss on the mean of
+#       per-vital SBP/DBP); they differ only in direction metadata + per-direction eval.
 TRAINER=refinement_trainer_mdvisco_pulsedb_dual
 LR=2.5e-4  # drives both the live optimizer.lr and the learning_rate path label
 
