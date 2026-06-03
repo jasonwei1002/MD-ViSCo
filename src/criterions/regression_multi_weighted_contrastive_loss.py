@@ -214,7 +214,10 @@ class RegressionMultiWeightedContrastiveLoss(BaseCriterion):
         else:
             total_loss += wcl_result
 
-        regression_result = self.regression_loss_term(input, target)
+        # Forward kwargs so a per-vital regression term (e.g. MultiBranchL1Loss)
+        # can read the model's per-vital outputs; stock l1_loss/mse_loss accept
+        # **kwargs and ignore them, so this is a no-op for them.
+        regression_result = self.regression_loss_term(input, target, **kwargs)
         if isinstance(regression_result, dict):
             total_loss += regression_result["total_loss"]
             if hasattr(self, "return_breakdown") and self.return_breakdown:

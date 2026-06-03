@@ -1,0 +1,27 @@
+# ============================================================================
+# Multi-Branch (per-vital) L1 Loss Configuration
+# ============================================================================
+#
+# Purpose:
+#   Per-vital summed MAE regression term for the MD-ViSCo refinement model. With
+#   both ECG and PPG present per sample, each single-source branch's SBP/DBP
+#   prediction is supervised independently against the target and the per-branch
+#   MAEs are SUMMED (paper §III.D headline L_MAE), instead of computing MAE on
+#   BPModel's averaged prediction (the Appendix-E multi-input ablation).
+#
+# Inherits:
+#   - base_multi_branch_l1_loss: registered from MultiBranchL1LossConfig
+#
+# Notes:
+#   - Only meaningful with a criterion that forwards kwargs to the regression
+#     term (regression_multi_wcl_pervital) AND a model that emits `per_vital_bp`
+#     (BPModel). Falls back to MAE on the aggregated prediction otherwise.
+#   - scale_factor defaults to 1.0 (same magnitude as l1_loss). To reproduce the
+#     paper's loss balance set scale_factor=0.001 (lambda_MAE), e.g.
+#     `trainer.criterion.regression_loss_term.scale_factor=0.001`.
+#
+# ============================================================================
+
+defaults:
+  - base_multi_branch_l1_loss
+  - _self_

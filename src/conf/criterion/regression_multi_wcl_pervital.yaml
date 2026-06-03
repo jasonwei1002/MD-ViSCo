@@ -1,0 +1,28 @@
+# ============================================================================
+# Regression Multi-WCL (per-vital) Loss Configuration
+# ============================================================================
+#
+# Purpose:
+#   Paper-headline refinement loss (§III.D): L_ref = L_MAE + L_WCL where L_MAE is
+#   the per-branch MAE SUMMED over i in {ECG, PPG} (each single-source branch
+#   supervised independently), and L_WCL is the demographic-aware multi-WCL.
+#
+#   Same as regression_multi_wcl EXCEPT the regression_loss_term is
+#   multi_branch_l1_loss (per-vital summed MAE) instead of l1_loss (MAE on the
+#   averaged prediction). The stock RegressionMultiWeightedContrastiveLoss already
+#   forwards its kwargs (incl. the model's per-vital BP outputs) to the regression
+#   term, so no special combined-loss subclass is needed. The WCL terms
+#   (multi_wcl_loss) are unchanged and already per-vital.
+#
+# Inherits:
+#   - base_regression_multi_wcl_loss
+#   - /criterion@wcl_loss_terms: multi_wcl_loss
+#   - /criterion@regression_loss_term: multi_branch_l1_loss
+#
+# ============================================================================
+
+defaults:
+  - base_regression_multi_wcl_loss
+  - /criterion@wcl_loss_terms: multi_wcl_loss
+  - /criterion@regression_loss_term: multi_branch_l1_loss
+  - _self_

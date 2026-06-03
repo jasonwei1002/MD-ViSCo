@@ -24,27 +24,46 @@ defaults:
   - _self_
 
 # loss_terms lists each WCL term and required demographic field keys (age_raw, gender_raw, height_raw, weight_raw, bmi_raw). See docs/criterion.md for demographic field usage.
+# Waveform-embedding WCL (paper Table X): temperature_weight=tau_s=4,
+# threshold=T_s=0.0235 (so exp(-|dBP|/4)>=0.0235 retains pairs within ~15 mmHg,
+# matching the paper's "<=15 mmHg" similarity), temperature_embeddings=tau_w=4,
+# scale_factor=lambda1=0.01. The paper's single per-modality term uses a combined
+# SBP/DBP similarity S*=0.5(exp(SBP)+exp(DBP)); this implementation splits it into
+# separate SBP- and DBP-weighted terms (each at lambda1, mirroring how the two
+# patient terms below each carry lambda2=0.01).
 loss_terms:
   - _target_: src.criterions.weighted_contrastive_loss.WeightedContrastiveLoss
     name: "ecg_sbp"
     embedding_key: "ecg_embeddings"
     weight_key: "y_sbp_raw"
-    scale_factor: 1e-3
+    temperature_embeddings: 4.0
+    temperature_weight: 4.0
+    threshold: 0.0235
+    scale_factor: 1e-2
   - _target_: src.criterions.weighted_contrastive_loss.WeightedContrastiveLoss
     name: "ppg_sbp"
     embedding_key: "ppg_embeddings"
     weight_key: "y_sbp_raw"
-    scale_factor: 1e-3
+    temperature_embeddings: 4.0
+    temperature_weight: 4.0
+    threshold: 0.0235
+    scale_factor: 1e-2
   - _target_: src.criterions.weighted_contrastive_loss.WeightedContrastiveLoss
     name: "ecg_dbp"
     embedding_key: "ecg_embeddings"
     weight_key: "y_dbp_raw"
-    scale_factor: 1e-3
+    temperature_embeddings: 4.0
+    temperature_weight: 4.0
+    threshold: 0.0235
+    scale_factor: 1e-2
   - _target_: src.criterions.weighted_contrastive_loss.WeightedContrastiveLoss
     name: "ppg_dbp"
     embedding_key: "ppg_embeddings"
     weight_key: "y_dbp_raw"
-    scale_factor: 1e-3
+    temperature_embeddings: 4.0
+    temperature_weight: 4.0
+    threshold: 0.0235
+    scale_factor: 1e-2
   - _target_: src.criterions.weighted_contrastive_loss.WeightedContrastiveLoss
     name: "text_gender_wcl"
     embedding_key: "text_embeddings"

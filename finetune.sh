@@ -7,32 +7,44 @@ set -euo pipefail
 # Finetunes on the PulseDB held-out test patients (CalFree_Test_Subset, 81/9/10),
 # initializing the model from the Step-1 pretrain checkpoint via
 # `trainer.load_weights_from` (loads ONLY model weights; optimizer/scheduler
-# start fresh). Same directions (PPG->BP + ECG->BP, direction_mode=multi) + WCL as
-# pretrain. NOTE: for BPModel this trains the both-vitals-AVERAGED model (loss on the
-# mean of per-vital SBP/DBP), NOT independent single-source branches — see pretrain.sh.
+# start fresh). The modality is chosen by SOURCE (see the SOURCE block below) and
+# MUST match the SOURCE used in pretrain.sh — warm-start strict-loads the weights, so
+# a mismatched architecture/direction would fail load_state_dict. Same WCL as pretrain.
 # Same memory flags as pretrain: use_amp(bf16) + gradient_checkpointing.
-# (TRAINER=refinement_trainer_mdvisco_pulsedb = one multi-source direction; same averaged
-#  training for BPModel — differs only in direction metadata / eval.)
 #
 # Usage (the pretrain checkpoint path is REQUIRED — no auto-discovery):
-#   bash finetune.sh /path/to/checkpoint_S_42_best.pt   # warm-start from this checkpoint
-#   COLD_START=1 bash finetune.sh                        # no warm-start (train from scratch)
+#   bash finetune.sh /path/to/PPG+ECG2BP_checkpoint_S_42_best.pt         # default SOURCE=joint
+#   SOURCE=ppg bash finetune.sh /path/to/PPG2BP_checkpoint_S_42_best.pt  # single-source PPG
+#   COLD_START=1 SOURCE=joint bash finetune.sh                          # no warm-start (from scratch)
 # --- Prereqs:  conda activate mdvisco   (run from repo root)
 # ============================================================================
 
 DATA=/public/home/hs_mmcd_5/project/jasonwei/MD-ViSCo/data
 WANDB_PROJECT=mdvisco-refinement
 WANDB_ENTITY=jasonwei
-# MUST match the trainer used in pretrain.sh — warm-start strict-loads the weights.
-# Two directions PPG->BP + ECG->BP (direction_mode=multi):           refinement_trainer_mdvisco_pulsedb_dual
-# One multi-source direction [PPG,ECG]->BP (direction_mode=single):  refinement_trainer_mdvisco_pulsedb
-# NOTE: for BPModel both train the same both-vitals-AVERAGED model (see pretrain.sh).
-TRAINER=refinement_trainer_mdvisco_pulsedb_dual
 LR=2.5e-4  # drives both the live optimizer.lr and the learning_rate path label
+
+# SOURCE selects the training modality — MUST match the SOURCE used in pretrain.sh,
+# because warm-start strict-loads the weights (same architecture/directions required):
+#   joint -> PAPER HEADLINE: both PPG+ECG per sample, each branch supervised independently,
+#            per-branch MAE summed; single-modality inference (trainer=..._pulsedb_joint).  [default]
+#   ppg   -> single-source PPG only    (trainer=..._pulsedb_ppg,  direction [PPG]->BP,    single)
+#   ecg   -> single-source ECG only    (trainer=..._pulsedb_ecg,  direction [ECG]->BP,    single)
+#   multi -> multi-INPUT ablation (App. E): [PPG,ECG]->BP, predictions AVERAGED (trainer=..._pulsedb).
+#   dual  -> ⚠ BROKEN with BPModel (mixed-batch mis-routing); use `joint`, not `dual`.
+SOURCE="${SOURCE:-joint}"
+case "$SOURCE" in
+  joint) TRAINER=refinement_trainer_mdvisco_pulsedb_joint ;;
+  ppg)   TRAINER=refinement_trainer_mdvisco_pulsedb_ppg   ;;
+  ecg)   TRAINER=refinement_trainer_mdvisco_pulsedb_ecg   ;;
+  multi) TRAINER=refinement_trainer_mdvisco_pulsedb       ;;
+  dual)  TRAINER=refinement_trainer_mdvisco_pulsedb_dual  ;;
+  *) echo "ERROR: invalid SOURCE='$SOURCE' (use joint | ppg | ecg | multi | dual)" >&2; exit 1 ;;
+esac
 
 WARMSTART_OVERRIDE=()
 if [[ "${COLD_START:-0}" == "1" ]]; then
-    echo "=== Step 2/2: FINETUNE (COLD START — no pretrain weights) ==="
+    echo "=== Step 2/2: FINETUNE (SOURCE=$SOURCE, trainer=$TRAINER, COLD START — no pretrain weights) ==="
 else
     PRETRAIN_CKPT="${1:-}"
     if [[ -z "${PRETRAIN_CKPT}" ]]; then
@@ -45,7 +57,7 @@ else
         echo "ERROR: pretrain checkpoint not found: ${PRETRAIN_CKPT}" >&2
         exit 1
     fi
-    echo "=== Step 2/2: FINETUNE warm-started from: ${PRETRAIN_CKPT} ==="
+    echo "=== Step 2/2: FINETUNE (SOURCE=$SOURCE, trainer=$TRAINER) warm-started from: ${PRETRAIN_CKPT} ==="
     WARMSTART_OVERRIDE=(trainer.load_weights_from="${PRETRAIN_CKPT}")
 fi
 

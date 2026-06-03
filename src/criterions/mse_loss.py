@@ -67,12 +67,16 @@ class MSELoss(BaseCriterion):
             reduction=reduction, device=device, name=name, log_loss=log_loss, **kwargs
         )
 
-    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, input: torch.Tensor, target: torch.Tensor, **kwargs
+    ) -> torch.Tensor:
         """Compute the MSE loss between input and target.
 
         Args:
             input: Predictions tensor (same shape as target).
             target: Ground truth tensor.
+            **kwargs: Extra criterion context (e.g. per-vital model outputs)
+                forwarded by combined criteria; ignored here.
 
         Returns:
             Loss tensor, scalar if reduction is 'mean' or 'sum'.

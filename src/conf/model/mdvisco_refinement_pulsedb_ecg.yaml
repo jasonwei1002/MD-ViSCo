@@ -1,0 +1,48 @@
+# ============================================================================
+# MD-ViSCo Refinement Model (BPModel) – PulseDB Single-Source ECG (with PI)
+# ============================================================================
+# Single-source variant of mdvisco_refinement_pulsedb: only the ECG VitalEncoder
+# is built (the PPG encoder is omitted), so the model trains and infers from ECG
+# alone. PI (DistilBERT demographic-text fusion) stays ON, identical to the full
+# config.
+#
+# Why a dedicated model config (not just a directions override):
+#   BPModel builds exactly one encoder per entry in `vital_encoders`. Listing only
+#   `ecg` here means no unused PPG encoder is ever created/DDP-broadcast and the
+#   forward loop never logs "Vital ppg not found in input, skipping". This is a
+#   true single-source model. (`vital_encoders` defaults to MISSING in
+#   BPModelConfig, so the single-key dict yields a clean one-encoder model with no
+#   ppg leakage from base_bp_model.)
+#
+# Pair with: trainer=refinement_trainer_mdvisco_pulsedb_ecg
+#   (directions=ecg2bp, input_preprocessing.source=[ecg]).
+# ============================================================================
+
+defaults:
+  - base_bp_model
+  - /checkpoint_io@checkpoint_io: checkpoint_io
+  - _self_
+
+input_length: ${oc.select:train_dataset.input_size,${test_dataset.input_size}}
+
+# PI ON: DistilBERT text pipeline projects 768 -> 512 to match VitalEncoder projection_dim
+text_encoder_pipeline:
+  _target_: src.model.mdvisco.TextEncoderPipeline
+  text_embedding: 768
+  projection_dim: 512
+  dropout: 0.1
+
+vital_encoders:
+  ecg:
+    _target_: src.model.mdvisco.VitalEncoder
+    vital: ecg
+    input_length: ${oc.select:train_dataset.input_size,${test_dataset.input_size}}
+    projection_dim: 512
+    dropout: 0.1
+    d_model: 64
+    pi: true
+    num_input_channels: 1
+    num_layers: 15
+    expansion_factor: 5
+    patch_length: 4
+    patch_stride: 4
